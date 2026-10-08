@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Reservas · O Polvo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Jost:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+
+<!-- Entrada -->
+<section class="login" id="login" hidden>
+  <form id="loginForm">
+    <div class="logo">O POLVO</div>
+    <h1>Gestão de reservas</h1>
+    <label>Palavra-passe
+      <input type="password" id="password" autocomplete="current-password" required autofocus>
+    </label>
+    <p class="err" id="loginErr" role="alert"></p>
+    <button class="btn primary" type="submit">Entrar</button>
+    <a href="index.html">← Voltar ao site</a>
+  </form>
+</section>
+
+<div class="app" id="app" hidden>
+  <header class="top">
+    <div class="brand"><span class="logo">O POLVO</span><span class="sub">Reservas</span><span class="mode" id="mode" hidden>Demonstração</span></div>
+    <nav class="views" role="tablist">
+      <button role="tab" data-view="dia" aria-selected="true">Dia</button>
+      <button role="tab" data-view="todas" aria-selected="false">Todas <b class="badge" id="pendingBadge" hidden></b></button>
+      <button role="tab" data-view="config" aria-selected="false">Definições</button>
+    </nav>
+    <div class="top-end">
+      <button class="btn primary" id="newBtn" title="Atalho: N">+ Nova reserva</button>
+      <a class="btn" href="index.html" target="_blank" rel="noopener">Ver site</a>
+      <button class="btn" id="logoutBtn">Sair</button>
+    </div>
+  </header>
+
+  <p class="banner" id="banner" hidden>Modo de demonstração — o servidor não está a correr, por isso as reservas ficam guardadas apenas neste browser. Para uso real, inicie o servidor (ficheiro <b>iniciar.bat</b>).</p>
+
+  <main>
+    <!-- ===== Dia ===== -->
+    <section id="view-dia">
+      <div class="daybar">
+        <button class="btn icon" id="prevDay" aria-label="Dia anterior">‹</button>
+        <div class="daytitle"><h1 id="dayTitle"></h1><input type="date" id="dayPick" aria-label="Escolher dia"></div>
+        <button class="btn icon" id="nextDay" aria-label="Dia seguinte">›</button>
+        <button class="btn" id="todayBtn">Hoje</button>
+        <button class="btn noprint" id="printBtn">Imprimir</button>
+      </div>
+      <div class="kpis" id="kpis"></div>
+      <div class="occ" id="occ" aria-label="Ocupação por horário"></div>
+      <div id="dayList"></div>
+    </section>
+
+    <!-- ===== Todas ===== -->
+    <section id="view-todas" hidden>
+      <div class="filters">
+        <input type="search" id="q" placeholder="Procurar nome, telefone, código, notas…  ( / )" aria-label="Procurar">
+        <div class="chips" id="ranges"></div>
+        <label>De <input type="date" id="from"></label>
+        <label>Até <input type="date" id="to"></label>
+        <select id="zoneFilter" aria-label="Zona">
+          <option value="">Todas as zonas</option><option value="sala">Sala</option><option value="esplanada">Esplanada</option><option value="any">Sem preferência</option>
+        </select>
+        <select id="sourceFilter" aria-label="Origem">
+          <option value="">Todas as origens</option><option value="site">Site</option><option value="telefone">Telefone</option><option value="presencial">Presencial</option>
+        </select>
+      </div>
+      <div class="chips status-chips" id="statusChips"></div>
+      <div class="tablebar"><span id="count"></span><span><button class="btn small" id="clearFilters">Limpar filtros</button> <button class="btn small" id="csvBtn">Exportar CSV</button></span></div>
+      <div class="tablewrap"><table id="table"></table></div>
+    </section>
+
+    <!-- ===== Definições ===== -->
+    <section id="view-config" hidden>
+      <form id="configForm" class="config">
+        <h1>Definições das reservas</h1>
+        <div class="grid">
+          <label>Lotação (lugares em simultâneo)<input type="number" name="capacity" min="1" max="1000" required></label>
+          <label>Duração de cada mesa (min)<input type="number" name="duration" min="15" max="480" step="5" required></label>
+          <label>Intervalo entre horários (min)<input type="number" name="interval" min="5" max="120" step="5" required></label>
+          <label>Máx. pessoas por reserva no site<input type="number" name="maxParty" min="1" max="200" required></label>
+          <label>Antecedência máxima (dias)<input type="number" name="maxDaysAhead" min="1" max="730" required></label>
+        </div>
+        <h2>Horários de reserva</h2>
+        <div class="grid">
+          <label>Almoço — primeira<input type="time" name="lunch0" required></label>
+          <label>Almoço — última<input type="time" name="lunch1" required></label>
+          <label>Jantar — primeira<input type="time" name="dinner0" required></label>
+          <label>Jantar — última<input type="time" name="dinner1" required></label>
+        </div>
+        <h2>Dias da semana sem reservas</h2>
+        <div class="weekdays" id="weekdays"></div>
+        <h2>Datas bloqueadas</h2>
+        <div class="blockadd">
+          <input type="date" id="blockDate" aria-label="Data a bloquear">
+          <input type="text" id="blockReason" placeholder="Motivo (ex.: evento privado)" maxlength="60" aria-label="Motivo">
+          <button type="button" class="btn" id="blockAdd">Bloquear data</button>
+        </div>
+        <ul class="blocked" id="blocked"></ul>
+        <div class="savebar"><button class="btn primary" type="submit">Guardar definições</button><span id="configMsg" role="status"></span></div>
+      </form>
+    </section>
+  </main>
+</div>
+
+<!-- Nova / editar reserva -->
+<dialog id="dlg">
+  <form id="resForm" method="dialog" novalidate>
+    <header><h2 id="dlgTitle">Nova reserva</h2><button type="button" class="btn icon" id="dlgClose" aria-label="Fechar">×</button></header>
+    <div class="grid">
+      <label class="w2">Nome<input name="name" required maxlength="80" autocomplete="off"><em class="err" data-err="name"></em></label>
+      <label>Telefone<input name="phone" type="tel" maxlength="24" autocomplete="off"><em class="err" data-err="phone"></em></label>
+      <label>Pessoas<input name="people" type="number" min="1" max="200" required><em class="err" data-err="people"></em></label>
+      <label>Data<input name="date" type="date" required><em class="err" data-err="date"></em></label>
+      <label>Hora<input name="time" type="time" step="300" list="timeList" required><em class="err" data-err="time"></em></label>
+      <label>Zona<select name="zone"><option value="any">Sem preferência</option><option value="sala">Sala</option><option value="esplanada">Esplanada</option></select></label>
+      <label>Mesa<input name="table" maxlength="20" placeholder="ex.: 12" autocomplete="off"></label>
+      <label>Estado<select name="status" id="statusSelect"></select></label>
+      <label>Origem<select name="source"><option value="telefone">Telefone</option><option value="presencial">Presencial</option><option value="site">Site</option></select></label>
+      <label>Ocasião<input name="occasion" maxlength="40" autocomplete="off"></label>
+      <label>E-mail<input name="email" type="email" maxlength="120" autocomplete="off"><em class="err" data-err="email"></em></label>
+      <label class="w4">Notas<textarea name="notes" rows="2" maxlength="500"></textarea></label>
+    </div>
+    <datalist id="timeList"></datalist>
+    <p class="avail" id="avail"></p>
+    <p class="err" id="dlgErr" role="alert"></p>
+    <footer>
+      <button type="button" class="btn danger" id="deleteBtn" hidden>Apagar</button>
+      <span class="meta" id="dlgMeta"></span>
+      <button type="button" class="btn" id="dlgCancel">Cancelar</button>
+      <button type="submit" class="btn primary" id="dlgSave">Guardar</button>
+    </footer>
+  </form>
+</dialog>
+
+<div class="toasts" id="toasts" aria-live="polite"></div>
+
+<script src="js/shared.js"></script>
+<script src="js/store.js"></script>
+<script src="js/admin.js"></script>
+</body>
+</html>

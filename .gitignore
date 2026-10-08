@@ -1,0 +1,5 @@
+# Palavra-passe de administração (gerada na primeira execução)
+config.json
+# Reservas dos clientes
+data/
+node_modules/
