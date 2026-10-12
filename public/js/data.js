@@ -11,6 +11,7 @@ window.POLVO = {
   menu: [
     { id: "s1", cat: "sopas", pt: "Sopa de legumes", en: "Vegetable soup", price: 1.9 },
     { id: "s2", cat: "sopas", pt: "Sopa de peixe", en: "Fish soup", price: 2.9 },
+    { id: "s3", cat: "sopas", pt: "Sopa do cozido", en: "Sopa do cozido", gloss: "cozido stew broth", price: 1.8 },
 
     { id: "p1", cat: "peixe", pt: "Sardinhas assadas na brasa", en: "Charcoal-grilled sardines", price: 13.8 },
     { id: "p2", cat: "peixe", pt: "Polvo à lagareiro", en: "Polvo à lagareiro", gloss: "lagareiro-style octopus", price: 23, polvo: true },
@@ -21,6 +22,7 @@ window.POLVO = {
     { id: "p7", cat: "peixe", pt: "Arroz de tamboril c/ marisco", en: "Monkfish and seafood rice", price: 36, for2: true },
     { id: "p8", cat: "peixe", pt: "Arroz de marisco", en: "Seafood rice", price: 38, for2: true },
     { id: "p9", cat: "peixe", pt: "Dourado da costa escalada", en: "Butterflied coastal sea bream", price: 18.9 },
+    { id: "p13", cat: "peixe", pt: "Corvina grelhada", en: "Grilled corvina", gloss: "meagre", price: 16 },
     { id: "p10", cat: "peixe", pt: "Lulas grelhadas", en: "Grilled squid", price: 21 },
     { id: "p11", cat: "peixe", pt: "Salmão grelhado", en: "Grilled salmon", price: 19 },
     { id: "p12", cat: "peixe", pt: "Bacalhau à minhota", en: "Bacalhau à minhota", gloss: "Minho-style salt cod", price: 16.5 },
