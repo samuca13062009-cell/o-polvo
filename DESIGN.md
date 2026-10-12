@@ -37,9 +37,9 @@ rounded:
 
 ## Overview
 
-The layout and motion language follow a reference the owner chose in October 2026 (digitalconvert.pt): a dark page with tight, heavy headlines, pill buttons, rounded bordered cards, numbered kickers and restrained but continuous motion. The theme is O Polvo's own, "the sea at night": deep navy with amber gold (the navy and ochre of the printed menu), sand-coloured light panels and an orange sun. The owner rejected a coral accent as too pink. The site has no photographs on hand: where the reference shows device mock-ups and pictures, this site shows live facts - today's sun over Santa Cruz, the day's rhythm, dishes with their prices.
+The layout and motion language follow a reference the owner chose in October 2026 (digitalconvert.pt): a dark page with tight, heavy headlines, pill buttons, rounded bordered cards and restrained but continuous motion. The theme is O Polvo's own, "the sea at night": deep navy with amber gold (the navy and ochre of the printed menu), sand-coloured light panels and an orange sun. The owner rejected a coral accent as too pink. The site has no photographs on hand: where the reference shows device mock-ups and pictures, this site shows live facts - today's sun over Santa Cruz, the day's rhythm, dishes with their prices.
 
-This document covers the public site only (`public/index.html`, `public/css/site.css`, `public/js/site.js`). The staff panel and the printed menu PDF keep their earlier look.
+This document covers the public site (`public/index.html`, `public/css/site.css`, `public/js/site.js`). The staff panel (`public/admin.html`, `public/css/admin.css`) uses the same palette, typeface and pill controls on a sand ground with a navy top bar. The printed menu PDF keeps its earlier look.
 
 ## Themes
 
@@ -52,11 +52,11 @@ Sections alternate. `.dark` (hero, the house, bookings, closing, footer) and `.l
 
 ## Typography
 
-One family, Archivo variable, self-hosted. Headlines are weight 800 at normal width with strong negative tracking; the second sentence of a heading turns accent. Kickers are small tracked capitals, numbered `01` to `04` on the main sections. Reading text is regular weight in the secondary text colour. Prices, hours and counts use tabular figures.
+One family, Archivo variable, self-hosted. Headlines are weight 800 at normal width with strong negative tracking; the second sentence of a heading turns accent. Headings stand alone: no kicker or eyebrow label sits above them (owner decision, October 2026). Reading text is regular weight in the secondary text colour. Prices, hours and counts use tabular figures.
 
 ## Components
 
-- **Buttons:** pills, 52px (44px small). Primary is filled with a soft coloured shadow and lifts 2px on hover while its arrow moves up and right; ghost is a 1px outline.
+- **Buttons:** pills, 52px (44px small). Primary is a flat fill with no shadow or glow (owner decision, October 2026) and lifts 2px on hover while its arrow moves up and right; ghost is a 1px outline.
 - **Cards:** 1px line, 22px radius, surface fill. `.spot` cards lift on hover and show a soft light that follows the pointer.
 - **Header:** fixed and transparent; after 24px of scroll it shrinks and takes a blurred dark fill. A 2px accent line along its bottom shows scroll progress. Under 900px the links collapse into a round burger that opens a full-screen menu.
 - **Hero panel:** "Hoje no Polvo" - the sun's arc from sunrise to sunset with the sun at the current time, the day's periods with the current one filled, and one sentence. A smaller glass card overlaps it and cycles through three dishes per category.
@@ -68,7 +68,7 @@ One family, Archivo variable, self-hosted. Headlines are weight 800 at normal wi
 
 One curve, `cubic-bezier(.22, 1, .36, 1)`. Only `transform`, `opacity`, `clip-path` and `stroke-dashoffset` move.
 
-- **On load:** header drops in; the headline rises line by line from a mask; kicker, lead, buttons and status follow in a stagger; the panel and the dish card rise and settle; the sun travels the arc to the current time.
+- **On load:** header drops in; the headline rises line by line from a mask; lead, buttons and status follow in a stagger; the panel and the dish card rise and settle; the sun travels the arc to the current time.
 - **Always:** tide lines run across the hero background in alternating directions and a dotted ring turns slowly; the unfinished part of the arc is a moving dashed line; the open dot pulses; the dish card's active tab fills like a timer and advances (paused on hover); the services strip scrolls and pauses on hover; the sunset icon's rays turn slowly; rings pulse out from the map pin.
 - **Pointer and scroll:** in the hero the panel tilts a few degrees, the dish card and background light drift, and the wave lines and sucker rings behind it shift with the pointer and the scroll.
 - **On scroll:** blocks fade up 34px in a stagger; headings rise word by word; light sections widen from a rounded inset to full width; numbers count up.
@@ -82,3 +82,4 @@ Hidden starting states depend on `html.motion`, set in the `<head>` only when re
 - Don't invent facts, reviews or numbers; every figure on the page comes from `data.js` or the fixed facts in `PRODUCT.md`.
 - Don't use pink or coral anywhere. Don't use orange for anything but the sun, or the accent as a large background fill.
 - Don't add a second typeface.
+- Don't put eyebrow labels above headings or glows under buttons.
