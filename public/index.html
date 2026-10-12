@@ -5,11 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>O Polvo · Restaurante em Santa Cruz, cozinha portuguesa com vista para o mar</title>
 <meta name="description" content="O Polvo, em Santa Cruz (Torres Vedras): cozinha portuguesa caseira, polvo à lagareiro, grelhados e arroz de marisco, com esplanada e vista para o mar. Reserve mesa online.">
-<meta name="theme-color" content="#1648b8">
+<meta name="theme-color" content="#10151b">
 <meta property="og:title" content="O Polvo · Santa Cruz">
 <meta property="og:description" content="Cozinha portuguesa caseira, com o mar à frente. Reserve a sua mesa.">
 <meta property="og:type" content="restaurant">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='6' fill='%23ffffff'/%3E%3Cpath d='M0 6a6 6 0 0 1 6-6h10v46a8 8 0 0 1-16 0zM32 0h16v46a8 8 0 0 1-16 0z' fill='%231648b8'/%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'%3E%3Crect width='36' height='36' rx='10' fill='%23147a9b'/%3E%3Cpath d='M9 25c0-9 4.500-15 10.500-15 4.500 0 7.500 3 7.500 7s-2.800 6.500-6.200 6.500c-2.800 0-4.800-1.800-4.800-4.200 0-2 1.400-3.300 3.200-3.300' fill='none' stroke='%23fff' stroke-width='2.600' stroke-linecap='round'/%3E%3C/svg%3E">
 <link rel="preload" href="fonts/archivo-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="css/site.css">
 <script>if (!matchMedia("(prefers-reduced-motion: reduce)").matches) document.documentElement.classList.add("motion");</script>
@@ -19,76 +19,138 @@
 "openingHoursSpecification":[{"@type":"OpeningHoursSpecification","dayOfWeek":["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"],"opens":"08:00","closes":"02:00"},{"@type":"OpeningHoursSpecification","dayOfWeek":"Sunday","opens":"08:00","closes":"00:00"}]}
 </script>
 </head>
-<body>
+<body class="dark">
 <a class="skip" href="#menu" data-en="Skip to menu">Saltar para o menu</a>
 
-<header class="nav" id="nav">
-  <a class="logo" href="#topo" aria-label="O Polvo, início">O Polvo</a>
-  <nav class="nav-links" aria-label="Principal">
+<header class="hd" id="nav">
+  <a class="logo" href="#topo" aria-label="O Polvo, início">
+    <svg viewBox="0 0 36 36" aria-hidden="true"><rect width="36" height="36" rx="10" fill="#147a9b"/><path d="M9 25c0-9 4.500-15 10.500-15 4.500 0 7.500 3 7.500 7s-2.800 6.500-6.200 6.500c-2.800 0-4.800-1.800-4.800-4.200 0-2 1.400-3.300 3.200-3.300" fill="none" stroke="#fff" stroke-width="2.600" stroke-linecap="round"/></svg>
+    <span>O<b>Polvo</b></span>
+  </a>
+  <nav class="hd-links" aria-label="Principal">
     <a href="#casa" data-en="The house">A casa</a>
     <a href="#menu">Menu</a>
     <a href="#reservas" data-en="Bookings">Reservas</a>
     <a href="#visitar" data-en="Visit">Visitar</a>
   </nav>
-  <div class="nav-end">
-    <div class="lang" role="group" aria-label="Idioma / Language">
+  <div class="hd-end">
+    <div class="lang lang-desk" role="group" aria-label="Idioma / Language">
       <button type="button" data-lang="pt" aria-pressed="true">PT</button>
       <button type="button" data-lang="en" aria-pressed="false">EN</button>
     </div>
-    <a class="btn btn-primary nav-cta" href="#reservas" data-en="Book a table">Reservar mesa</a>
+    <a class="btn btn-p btn-sm nav-cta" href="#reservas" data-en="Book a table">Reservar mesa</a>
+    <button type="button" class="burger" id="burger" aria-label="Menu" aria-expanded="false" aria-controls="overlay"><i></i><i></i></button>
   </div>
 </header>
 
+<div class="overlay" id="overlay">
+  <a href="#casa" style="--i:0" data-en="The house">A casa</a>
+  <a href="#menu" style="--i:1">Menu</a>
+  <a href="#reservas" style="--i:2" data-en="Bookings">Reservas</a>
+  <a href="#visitar" style="--i:3" data-en="Visit">Visitar</a>
+  <a class="small" href="tel:+351261931400" style="--i:4">261 931 400</a>
+  <div class="lang" role="group" aria-label="Idioma / Language" style="align-self:flex-start;margin-top:18px">
+    <button type="button" data-lang="pt" aria-pressed="true">PT</button>
+    <button type="button" data-lang="en" aria-pressed="false">EN</button>
+  </div>
+</div>
+
 <main>
 <!-- ============ TOPO ============ -->
-<section class="hero" id="topo">
-  <div class="toldo" aria-hidden="true"><div class="toldo-pano"></div></div>
-  <div class="wrap hero-in">
-    <h1 aria-label="O Polvo"><span aria-hidden="true"><span class="l" style="--i:0">O</span> <span class="l" style="--i:1">P</span><span class="l" style="--i:2">o</span><span class="l" style="--i:3">l</span><span class="l" style="--i:4">v</span><span class="l" style="--i:5">o</span></span></h1>
-    <div class="hero-lado">
-      <p class="lede" data-en="Home-style Portuguese cooking, with the sea right in front of you.">Cozinha portuguesa caseira, com o mar mesmo à frente.</p>
-      <ul class="agora">
-        <li class="estado" id="openChip">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path class="pano" d="M7 4h13l-3.5 4.500L20 13H7z"/><path d="M7 21V3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-          <span>…</span>
-        </li>
+<section class="hero dark" id="topo">
+  <div class="glow" aria-hidden="true"></div>
+  <svg class="beams" viewBox="0 0 60 60" aria-hidden="true">
+    <defs><linearGradient id="luz" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2aa3c9" stop-opacity=".3"/><stop offset="1" stop-color="#2aa3c9" stop-opacity=".06"/></linearGradient></defs>
+    <path d="M22 0h11L19 60H8zM40 0h8L34 60h-8zM54 0h5L45 60h-5z" fill="url(#luz)" stroke="#2aa3c9" stroke-opacity=".45" stroke-width=".08"/>
+  </svg>
+  <div class="grain" aria-hidden="true"></div>
+
+  <div class="wrap hero-grid">
+    <div class="hero-text">
+      <p class="kicker in-up" style="--i:0" data-en="Santa Cruz · Torres Vedras · Portuguese restaurant">Santa Cruz · Torres Vedras · Restaurante</p>
+      <h1>
+        <span class="ln" style="--i:0"><span data-en="Home-style Portuguese cooking.">Cozinha portuguesa caseira.</span></span>
+        <span class="ln ac" style="--i:1"><span data-en="With the sea right in front.">Com o mar mesmo à frente.</span></span>
+      </h1>
+      <p class="lead in-up" style="--i:4" data-en="Octopus à lagareiro, charcoal-grilled sardines and seafood rice, with a terrace and a view of the Atlantic. Open every day, from breakfast until late.">Polvo à lagareiro, sardinhas na brasa e arroz de marisco, com esplanada e vista para o Atlântico. Aberto todos os dias, do pequeno-almoço à noite.</p>
+      <div class="hero-cta in-up" style="--i:5">
+        <a class="btn btn-p" href="#reservas"><span data-en="Book a table">Reservar mesa</span><svg class="arr" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 12l8-8M5.500 4H12v6.500" fill="none" stroke="currentColor" stroke-width="1.800" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+        <a class="btn btn-g" href="#menu" data-en="See the menu">Ver o menu</a>
+      </div>
+      <ul class="agora in-up" style="--i:6">
+        <li class="estado" id="openChip"><i class="dot"></i><span>…</span></li>
         <li id="sunChip">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path class="sol" d="M5.500 16a6.500 6.500 0 0 1 13 0z"/><path d="M2 16h20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 17a7 7 0 0 1 14 0M2 17h20M12 4v2.500M4.600 8.600l1.800 1.800M19.400 8.600l-1.800 1.800M7 21h10" fill="none" stroke="currentColor" stroke-width="1.700" stroke-linecap="round"/></svg>
           <span>…</span>
         </li>
       </ul>
-      <div class="hero-cta">
-        <a class="btn btn-primary btn-lg" href="#reservas" data-en="Book a table">Reservar mesa</a>
-        <a class="btn btn-quiet btn-lg" href="#menu" data-en="See the menu">Ver o menu</a>
+    </div>
+
+    <div class="hero-visual" id="visual">
+      <div class="panel dark" id="rhythm">
+        <div class="panel-top"><span><i class="live"></i><span data-en="Today at O Polvo">Hoje no Polvo</span></span><span id="hojeData"></span></div>
+        <svg class="arc" id="arc" viewBox="0 0 320 132" role="img" aria-label="Percurso do sol hoje em Santa Cruz">
+          <path class="base" d="M24 108Q160 -52 296 108"/>
+          <path class="feito" id="arcFeito" d="M24 108Q160 -52 296 108"/>
+          <line class="horizonte" x1="6" y1="108" x2="314" y2="108"/>
+          <circle class="halo" id="arcHalo" r="13" cx="24" cy="108"/>
+          <circle class="astro" id="arcSol" r="6.500" cx="24" cy="108"/>
+          <text x="24" y="126" text-anchor="middle" id="arcNasce"></text>
+          <text x="296" y="126" text-anchor="middle" class="forte" id="arcPoe"></text>
+          <text x="160" y="126" text-anchor="middle" id="arcLegenda"></text>
+        </svg>
+        <div class="dia-bar" id="rhythmBar"></div>
+        <p id="rhythmNow"></p>
+      </div>
+
+      <div class="vitrine dark" id="vitrine">
+        <div class="vt-tabs" id="vtTabs" role="tablist" aria-label="Pratos em destaque"></div>
+        <div class="vt-list" id="vtList" aria-live="off"></div>
+        <a class="vt-foot" href="#menu"><span data-en="See the whole menu">Ver a carta completa</span><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 12l8-8M5.500 4H12v6.500" fill="none" stroke="currentColor" stroke-width="1.800" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
       </div>
     </div>
-    <div class="dia intro" id="rhythm">
-      <div class="dia-bar" id="rhythmBar"></div>
-      <p id="rhythmNow"></p>
-    </div>
   </div>
+
+  <div class="wrap">
+    <ul class="stats">
+      <li data-rv><b data-count id="stPratos">0</b><span data-en="dishes on the menu">pratos na carta</span></li>
+      <li data-rv><b data-count id="stPolvo">0</b><span data-en="ways to eat octopus">maneiras de comer polvo</span></li>
+      <li data-rv><b data-count="7">0</b><span data-en="days a week">dias por semana</span></li>
+      <li data-rv><b>02:00</b><span data-en="closing time (Sundays, midnight)">hora de fecho (ao domingo, 00:00)</span></li>
+    </ul>
+  </div>
+  <div class="marquee" aria-label="Serviços"><ul id="services"></ul></div>
 </section>
 
 <!-- ============ A CASA ============ -->
-<section class="casa" id="casa">
-  <div class="wrap casa-grid">
-    <h2 data-en="A house by the sea, <em>open every day.</em>">Uma casa de mar, <em>de portas abertas todos os dias.</em></h2>
+<section class="casa sec dark" id="casa">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="kicker" data-rv><b>01</b><span data-en="The house">A casa</span></p>
+      <h2 data-en="A house by the sea, <span class='ac'>open every day.</span>">Uma casa de mar, <span class="ac">de portas abertas todos os dias.</span></h2>
+    </div>
     <!-- FOTOGRAFIA: quando houver uma fotografia real da esplanada ou da sala, descomente o bloco
          abaixo e troque o ficheiro. Não usar imagens de banco nem geradas.
-    <figure class="foto">
-      <img src="img/esplanada.jpg" alt="A esplanada de O Polvo, com o mar ao fundo" width="1600" height="1000" loading="lazy">
+    <figure class="foto" data-rv>
+      <img src="img/esplanada.jpg" alt="A esplanada de O Polvo, com o mar ao fundo" width="1600" height="900" loading="lazy">
     </figure>
     -->
-    <div class="pontos">
-      <article>
+    <div class="trio">
+      <article class="card spot" data-rv>
+        <span class="n">01</span>
+        <div class="ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 9c2.500 0 2.500-2 5-2s2.500 2 5 2 2.500-2 5-2 2.500 2 5 2M2 14c2.500 0 2.500-2 5-2s2.500 2 5 2 2.500-2 5-2 2.500 2 5 2M2 19c2.500 0 2.500-2 5-2s2.500 2 5 2 2.500-2 5-2 2.500 2 5 2"/></svg></div>
         <h3 data-en="A view of the sea">Vista para o mar</h3>
         <p data-en="Lunch and dinner come with a view of the Atlantic. Santa Cruz faces west, so at the end of the afternoon the sun sets in front of your table.">Almoça-se e janta-se com vista para o Atlântico. Santa Cruz está virada a poente, por isso ao fim da tarde o sol põe-se em frente à mesa.</p>
       </article>
-      <article>
+      <article class="card spot" data-rv>
+        <span class="n">02</span>
+        <div class="ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3c1 3.500 5 5 5 10a5 5 0 0 1-10 0c0-2 1-3 2-4 0 2 1 3 2 3 0-3-1-5 1-9zM5 21h14"/></svg></div>
         <h3 data-en="Home cooking, off the grill">Cozinha caseira, da brasa</h3>
         <p data-en="Traditional Portuguese dishes made the unhurried way: octopus à lagareiro, charcoal-grilled sardines, seafood rice and grilled meats.">Pratos tradicionais portugueses feitos sem pressa: polvo à lagareiro, sardinhas na brasa, arroz de marisco e carnes grelhadas.</p>
       </article>
-      <article>
+      <article class="card spot" data-rv>
+        <span class="n">03</span>
+        <div class="ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11a9 9 0 0 1 18 0zM12 11v10M9 21h6M12 2v1"/></svg></div>
         <h3 data-en="Terrace or dining room">Esplanada ou sala</h3>
         <p data-en="On fine days, the terrace. When the weather turns, an air-conditioned room. From breakfast until late at night.">Nos dias de bom tempo, a esplanada. Quando o tempo aperta, a sala climatizada. Do pequeno-almoço à noite dentro.</p>
       </article>
@@ -96,55 +158,51 @@
   </div>
 </section>
 
-<div class="faixa">
-  <div class="wrap">
-    <ul class="servicos" id="services" aria-label="Serviços"></ul>
-  </div>
-</div>
-
 <!-- ============ MENU ============ -->
-<section class="menu" id="menu">
+<section class="menu sec light" id="menu">
   <div class="wrap">
     <div class="menu-topo">
-      <h2>Menu</h2>
-      <label class="search">
+      <div>
+        <p class="kicker" data-rv><b>02</b><span>Menu</span></p>
+        <h2 data-en="Flavours of the <span class='ac'>Santa Cruz coast.</span>">Sabores da <span class="ac">costa de Santa Cruz.</span></h2>
+      </div>
+      <label class="search" data-rv>
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.500" fill="none" stroke="currentColor" stroke-width="2"/><path d="M16 16l4.500 4.500" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
         <input type="search" id="menuSearch" placeholder="Procurar um prato…" data-en-placeholder="Search for a dish…" aria-label="Procurar um prato">
       </label>
     </div>
-    <p class="menu-tip" data-en="Flavours of the Santa Cruz coast. Use <b>+</b> to add dishes to your table: the total adds up as you go, and you can take your picks to the booking.">Sabores da costa de Santa Cruz. Use o <b>+</b> para juntar pratos à sua mesa: o total vai-se somando e pode levar a escolha para a reserva.</p>
-    <div class="tabs" role="tablist" aria-label="Categorias" id="tabs"></div>
-    <div id="menuList" class="menu-list" aria-live="polite"></div>
-    <p class="menu-foot"><span data-en="VAT included at the current rate.">IVA incluído à taxa em vigor.</span> <a href="menu-o-polvo.pdf" target="_blank" rel="noopener" data-en="Download the menu (PDF)">Descarregar o menu (PDF)</a></p>
+    <div data-rv><div class="tabs" role="tablist" aria-label="Categorias" id="tabs"><span class="tab-ind" id="tabInd" aria-hidden="true"></span></div></div>
+    <p class="menu-tip" data-rv data-en="Use <b>+</b> to add dishes to your table: the total adds up as you go, and you can take your picks to the booking.">Use o <b>+</b> para juntar pratos à sua mesa: o total vai-se somando e pode levar a escolha para a reserva.</p>
+    <div class="card menu-card" data-rv><div id="menuList" class="menu-list" aria-live="polite"></div></div>
+    <p class="menu-foot" data-rv><span data-en="VAT included at the current rate.">IVA incluído à taxa em vigor.</span> <a href="menu-o-polvo.pdf" target="_blank" rel="noopener" data-en="Download the menu (PDF)">Descarregar o menu (PDF)</a></p>
   </div>
   <div class="tray" id="tray" hidden>
-    <div class="wrap tray-in">
+    <div class="tray-in dark">
       <div class="tray-info"><strong id="trayCount"></strong><span id="trayItems"></span></div>
       <div class="tray-end">
         <b id="trayTotal"></b>
-        <button type="button" class="btn btn-ghost" id="trayClear" data-en="Clear">Limpar</button>
-        <button type="button" class="btn btn-light" id="trayGo" data-en="Take to booking">Levar para a reserva</button>
+        <button type="button" class="btn btn-g btn-sm" id="trayClear" data-en="Clear">Limpar</button>
+        <button type="button" class="btn btn-p btn-sm" id="trayGo" data-en="Take to booking">Levar para a reserva</button>
       </div>
     </div>
   </div>
 </section>
 
 <!-- ============ RESERVAS ============ -->
-<section class="reservas" id="reservas">
+<section class="reservas sec dark" id="reservas">
   <div class="wrap res-grid">
     <div class="res-pitch">
-      <div class="res-pitch-in">
-        <h2 data-en="Book your table.">Reserve a sua mesa.</h2>
-        <p data-en="Pick the day and the time and send your request. The restaurant confirms it afterwards.">Escolha o dia e a hora e envie o pedido. O restaurante confirma-o de seguida.</p>
-        <div class="poente" id="sunsetCard">
-          <svg viewBox="0 0 48 30" aria-hidden="true"><path class="sol" d="M10 24a14 14 0 0 1 28 0z"/><path d="M2 24h44" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-          <div><b id="sunsetTitle"></b><span id="sunsetText"></span></div>
-        </div>
-        <p class="res-alt"><span data-en="Prefer to call? Groups, events and catering:">Prefere ligar? Grupos, eventos e catering:</span> <a href="tel:+351261931400">261 931 400</a></p>
+      <p class="kicker" data-rv><b>03</b><span data-en="Bookings">Reservas</span></p>
+      <h2 data-en="Your table, <span class='ac'>in a minute.</span>">A sua mesa, <span class="ac">num minuto.</span></h2>
+      <p class="lead" data-rv data-en="Pick the day and the time and send your request. The restaurant confirms it afterwards.">Escolha o dia e a hora e envie o pedido. O restaurante confirma-o de seguida.</p>
+      <div class="card poente" id="sunsetCard" data-rv>
+        <svg viewBox="0 0 48 48" aria-hidden="true"><g class="raios"><path d="M24 8v5M9.900 15.900l3.500 3.500M38.100 15.900l-3.500 3.500M4 30h5M39 30h5"/></g><path d="M14 30a10 10 0 0 1 20 0M4 37h40M12 43h24"/></svg>
+        <div><b id="sunsetTitle"></b><span id="sunsetText"></span></div>
       </div>
+      <p class="res-alt" data-rv><span data-en="Prefer to call? Groups, events and catering:">Prefere ligar? Grupos, eventos e catering:</span> <a href="tel:+351261931400">261 931 400</a></p>
     </div>
 
-    <div class="widget" id="widget">
+    <div class="card widget" id="widget" data-rv>
       <form id="resForm" novalidate>
         <fieldset>
           <legend><span class="n">1</span><span data-en="How many?">Quantas pessoas?</span></legend>
@@ -202,7 +260,7 @@
         <div class="submit">
           <p id="summary" class="summary"></p>
           <p class="err" id="formErr" role="alert"></p>
-          <button class="btn btn-primary btn-lg" type="submit" id="submitBtn" data-en="Request booking">Pedir reserva</button>
+          <button class="btn btn-p" type="submit" id="submitBtn"><span data-en="Request booking">Pedir reserva</span><svg class="arr" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 12l8-8M5.500 4H12v6.500" fill="none" stroke="currentColor" stroke-width="1.800" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
           <small data-en="We only use your details to manage this booking.">Usamos os seus dados apenas para gerir esta reserva.</small>
         </div>
       </form>
@@ -214,8 +272,8 @@
         <p class="code"><span data-en="Booking code">Código da reserva</span><b id="doneCode"></b></p>
         <p class="done-note" data-en="The booking is confirmed once the restaurant validates it. If you need to change it, call 261 931 400 and give this code.">A reserva fica confirmada assim que o restaurante a validar. Se precisar de alterar, ligue 261 931 400 e indique este código.</p>
         <div class="done-actions">
-          <button type="button" class="btn btn-primary" id="icsBtn" data-en="Add to calendar">Adicionar ao calendário</button>
-          <button type="button" class="btn btn-quiet" id="againBtn" data-en="New booking">Nova reserva</button>
+          <button type="button" class="btn btn-p" id="icsBtn" data-en="Add to calendar">Adicionar ao calendário</button>
+          <button type="button" class="btn btn-g" id="againBtn" data-en="New booking">Nova reserva</button>
         </div>
       </div>
     </div>
@@ -223,43 +281,96 @@
 </section>
 
 <!-- ============ VISITAR ============ -->
-<section class="visitar" id="visitar">
+<section class="visitar sec light" id="visitar">
   <div class="wrap">
-    <h2 data-en="Come whenever you like. <em>From breakfast until late.</em>">Apareça quando quiser. <em>Do pequeno-almoço à noite.</em></h2>
+    <div class="sec-head">
+      <p class="kicker" data-rv><b>04</b><span data-en="Visit">Visitar</span></p>
+      <h2 data-en="Come whenever you like. <span class='ac'>From breakfast until late.</span>">Apareça quando quiser. <span class="ac">Do pequeno-almoço à noite.</span></h2>
+    </div>
 
     <div class="visit-grid">
-      <div class="bloco">
+      <div class="card bloco" data-rv>
         <h3 data-en="Opening hours">Horário</h3>
         <table class="hours" id="hours"></table>
       </div>
-      <div class="bloco">
+      <div class="card bloco" data-rv>
         <h3 data-en="Where we are">Onde estamos</h3>
         <address>Urbanização do Pisão, Lote 2<br>2560-042 Santa Cruz, Portugal</address>
         <p class="links">
-          <a class="btn btn-primary" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=O+Polvo+Urbaniza%C3%A7%C3%A3o+do+Pis%C3%A3o+Lote+2+2560-042+Santa+Cruz" data-en="Get directions">Como chegar</a>
-          <a class="btn btn-quiet" href="tel:+351261931400">261 931 400</a>
+          <a class="btn btn-p btn-sm" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=O+Polvo+Urbaniza%C3%A7%C3%A3o+do+Pis%C3%A3o+Lote+2+2560-042+Santa+Cruz" data-en="Get directions">Como chegar</a>
+          <a class="btn btn-g btn-sm" href="tel:+351261931400">261 931 400</a>
         </p>
-        <p class="small" data-en="Free parking. Step-free access. Pets welcome.">Estacionamento gratuito. Acesso para mobilidade reduzida. Animais bem-vindos.</p>
         <h3 class="mt" data-en="Payment">Pagamento</h3>
         <ul class="pay" id="pay"></ul>
       </div>
-      <div class="map" id="map">
+      <div class="card map" id="map" data-rv>
         <button type="button" id="mapBtn">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s7-6.200 7-11.500a7 7 0 0 0-14 0C5 14.800 12 21 12 21z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="12" cy="9.500" r="2.500" fill="currentColor"/></svg>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s7-6.200 7-11.500a7 7 0 0 0-14 0C5 14.800 12 21 12 21z" fill="none" stroke="currentColor" stroke-width="1.800" stroke-linejoin="round"/><circle cx="12" cy="9.500" r="2.500" fill="currentColor"/></svg>
           <b data-en="Show map">Mostrar mapa</b>
           <small data-en="Loading the map sends your IP address to Google Maps.">Ao carregar o mapa, o seu IP é enviado ao Google Maps.</small>
         </button>
       </div>
     </div>
+
+    <div class="faq">
+      <div>
+        <p class="kicker" data-rv><span data-en="Before you come">Antes de vir</span></p>
+        <h2 data-en="What people ask us most.">O que mais nos perguntam.</h2>
+      </div>
+      <ul class="faq-list" id="faq" data-rv>
+        <li>
+          <button type="button" class="faq-q" aria-expanded="false"><span data-en="Is there parking?">Há estacionamento?</span><i></i></button>
+          <div class="faq-a"><div><p data-en="Yes. The restaurant has free parking spaces.">Sim. O restaurante tem lugares de estacionamento gratuitos.</p></div></div>
+        </li>
+        <li>
+          <button type="button" class="faq-q" aria-expanded="false"><span data-en="Can I bring my dog?">Posso levar o meu cão?</span><i></i></button>
+          <div class="faq-a"><div><p data-en="You can. Pets are welcome.">Pode. Os animais de estimação são bem-vindos.</p></div></div>
+        </li>
+        <li>
+          <button type="button" class="faq-q" aria-expanded="false"><span data-en="Do you do takeaway, catering or private events?">Fazem takeaway, catering ou eventos privados?</span><i></i></button>
+          <div class="faq-a"><div><p data-en="All three. You can order our dishes to take away, and for catering or to hold a private party here, call us on 261 931 400.">Os três. Pode encomendar os nossos pratos para levar e, para catering ou para fazer cá a sua festa, ligue-nos para o 261 931 400.</p></div></div>
+        </li>
+        <li>
+          <button type="button" class="faq-q" aria-expanded="false"><span data-en="Is the restaurant accessible?">O restaurante é acessível?</span><i></i></button>
+          <div class="faq-a"><div><p data-en="Yes, access is easy for people with reduced mobility.">Sim, o acesso é fácil para pessoas com mobilidade reduzida.</p></div></div>
+        </li>
+        <li>
+          <button type="button" class="faq-q" aria-expanded="false"><span data-en="Is there Wi-Fi and a smoking area?">Há Wi-Fi e zona de fumadores?</span><i></i></button>
+          <div class="faq-a"><div><p data-en="Wi-Fi is free for guests and there is a dedicated area for smokers.">O Wi-Fi é gratuito para os clientes e há uma área própria para fumadores.</p></div></div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FECHO ============ -->
+<section class="fecho sec dark" id="contacto">
+  <div class="glow" aria-hidden="true"></div>
+  <div class="wrap">
+    <p class="kicker" data-rv><span data-en="Contact">Contactos</span></p>
+    <h2 data-en="There's a table <span class='ac'>waiting for you.</span>">Há uma mesa <span class="ac">à sua espera.</span></h2>
+    <div class="contactos">
+      <a class="card spot" href="tel:+351261931400" data-rv>
+        <div class="ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h4l2 5-2.500 1.500a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z"/></svg></div>
+        <span data-en="Call">Ligar</span><b>261 931 400</b>
+      </a>
+      <a class="card spot" href="mailto:opolvo@outlook.pt" data-rv>
+        <div class="ico"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg></div>
+        <span>E-mail</span><b>opolvo@outlook.pt</b>
+      </a>
+      <a class="card spot" href="#reservas" data-rv>
+        <div class="ico"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg></div>
+        <span data-en="Online">Online</span><b data-en="Book a table">Reservar mesa</b>
+      </a>
+    </div>
   </div>
 </section>
 </main>
 
-<footer class="footer">
-  <div class="toldo toldo-fim" aria-hidden="true"><div class="toldo-pano"></div></div>
+<footer class="footer dark">
   <div class="wrap foot-grid">
     <div>
-      <div class="logo">O Polvo</div>
+      <div class="logo"><svg viewBox="0 0 36 36" aria-hidden="true"><rect width="36" height="36" rx="10" fill="#147a9b"/><path d="M9 25c0-9 4.500-15 10.500-15 4.500 0 7.500 3 7.500 7s-2.800 6.500-6.200 6.500c-2.800 0-4.800-1.800-4.800-4.200 0-2 1.400-3.300 3.200-3.300" fill="none" stroke="#fff" stroke-width="2.600" stroke-linecap="round"/></svg><span>O<b>Polvo</b></span></div>
       <p data-en="Portuguese restaurant in Santa Cruz. Takeaway, catering and private events.">Restaurante de cozinha portuguesa em Santa Cruz. Takeaway, catering e eventos privados.</p>
     </div>
     <div>
@@ -273,17 +384,11 @@
       <p><a href="https://www.livroreclamacoes.pt/inicio" target="_blank" rel="noopener" data-en="Complaints book">Livro de reclamações</a></p>
     </div>
   </div>
-  <div class="wrap foot-end">
+  <div class="wrap"><div class="foot-end">
     <span>© <span id="year"></span> O Polvo</span>
     <a href="admin.html" data-en="Staff area">Área reservada</a>
-  </div>
+  </div></div>
 </footer>
-
-<nav class="dock" aria-label="Atalhos">
-  <a href="tel:+351261931400" data-en="Call">Ligar</a>
-  <a href="#menu">Menu</a>
-  <a href="#reservas" class="on" data-en="Book">Reservar</a>
-</nav>
 
 <script src="js/shared.js"></script>
 <script src="js/store.js"></script>

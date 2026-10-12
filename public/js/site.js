@@ -23,8 +23,19 @@
   function anim(el, frames, ms) {
     if (motion && el && el.animate) el.animate(frames, { duration: ms || 320, easing: EASE });
   }
-  // o toldinho de um item escolhido desce para o lugar
-  function drop(el) { anim(el, [{ backgroundPosition: "center -6px, 0 0" }, { backgroundPosition: "center 3px, 0 0" }], 420); }
+  // um item acabado de escolher assenta no lugar
+  function drop(el) { anim(el, [{ transform: "scale(.88)" }, { transform: "scale(1)" }], 480); }
+  // conta de zero até ao valor, com rede de segurança para separadores em segundo plano
+  function countUp(el, to) {
+    if (!motion) { el.textContent = to; return; }
+    var start = performance.now(), raf = 0;
+    setTimeout(function () { cancelAnimationFrame(raf); el.textContent = to; }, 1700);
+    (function step(now) {
+      var p = Math.min(1, (now - start) / 1400);
+      el.textContent = Math.round(to * (1 - Math.pow(1 - p, 4)));
+      if (p < 1) raf = requestAnimationFrame(step);
+    })(start);
+  }
   function rise(el, from) { anim(el, [{ transform: "translateY(" + (from || 60) + "%)", opacity: 0 }, { transform: "none", opacity: 1 }], 300); }
 
   // parte os títulos em palavras, para entrarem uma a uma
@@ -66,7 +77,7 @@
       el.placeholder = lang === "en" ? el.dataset.enPlaceholder : el.dataset.ptPlaceholder;
     });
     $$(".lang button").forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.lang === lang)); });
-    renderStatic(); renderDay(); renderTabs(); renderMenu(); renderTray(); renderWidget();
+    renderStatic(); renderDay(); renderTabs(); renderMenu(); renderTray(); renderWidget(); renderVitrine(false);
     splitHeads();
   }
   $$(".lang button").forEach(function (b) {
@@ -87,8 +98,9 @@
   }
   var money = new Intl.NumberFormat("pt-PT", { style: "currency", currency: "EUR" });
 
-  // Hora do pôr do sol em Santa Cruz (algoritmo NOAA), em minutos locais
-  function sunset(date) {
+  // Nascer e pôr do sol em Santa Cruz (algoritmo NOAA), em minutos locais
+  function sunset(date) { return sunTimes(date).set; }
+  function sunTimes(date) {
     var d = new Date(date + "T12:00:00Z"), rad = Math.PI / 180;
     var n = Math.floor((d - Date.UTC(d.getUTCFullYear(), 0, 0)) / 864e5);
     var g = 2 * Math.PI / 365 * (n - 1 + 0.25);
@@ -96,8 +108,8 @@
     var decl = 0.006918 - 0.399912 * Math.cos(g) + 0.070257 * Math.sin(g) - 0.006758 * Math.cos(2 * g) + 0.000907 * Math.sin(2 * g) - 0.002697 * Math.cos(3 * g) + 0.00148 * Math.sin(3 * g);
     var lat = P.place.lat * rad;
     var ha = Math.acos(Math.cos(90.833 * rad) / (Math.cos(lat) * Math.cos(decl)) - Math.tan(lat) * Math.tan(decl)) / rad;
-    var utc = 720 - 4 * (P.place.lng - ha) - eq;
-    return Shared.nowLisbon(new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), 0, Math.round(utc)))).minutes;
+    function local(utc) { return Shared.nowLisbon(new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), 0, Math.round(utc)))).minutes; }
+    return { rise: local(720 - 4 * (P.place.lng + ha) - eq), set: local(720 - 4 * (P.place.lng - ha) - eq) };
   }
 
   // Dia de serviço em curso (depois da meia-noite ainda conta o dia anterior)
@@ -113,14 +125,18 @@
   /* ---------- Blocos estáticos dependentes do idioma ---------- */
   function renderStatic() {
     var sv = $("#services"); sv.textContent = "";
-    P.services.forEach(function (s, i) { sv.appendChild(h("li", { text: L(s[0], s[1]), style: "--i:" + i })); });
+    // duas cópias seguidas, para a faixa correr sem costura
+    [0, 1].forEach(function (copy) {
+      P.services.forEach(function (s) { sv.appendChild(h("li", { text: L(s[0], s[1]), "aria-hidden": copy ? "true" : null })); });
+    });
     var pay = $("#pay"); pay.textContent = "";
     P.payments.forEach(function (p) { pay.appendChild(h("li", { text: L(p[0], p[1]) })); });
     $("#year").textContent = Shared.nowLisbon().date.slice(0, 4);
   }
 
   function renderDay() {
-    var s = service(), today = Shared.nowLisbon(), sun = sunset(today.date);
+    var s = service(), today = Shared.nowLisbon(), times = sunTimes(today.date), sun = times.set;
+    renderArc(today, times);
     var chip = $("#openChip");
     chip.classList.toggle("open", s.open);
     chip.lastElementChild.textContent = s.open
@@ -140,7 +156,6 @@
 
     // Barra do dia
     var bar = $("#rhythmBar"), span = s.day.close - s.day.open, current = null; bar.textContent = "";
-    bar.setAttribute("data-fim", fmtHour(s.day.close));
     P.moments.forEach(function (m, i) {
       var to = Math.min(i + 1 < P.moments.length ? P.moments[i + 1].from : s.day.close, s.day.close);
       if (to <= m.from) return;
@@ -149,11 +164,57 @@
       bar.appendChild(h("span", { class: on ? "now" : (s.open && s.pos >= to ? "past" : ""), style: "flex:" + (to - m.from), "data-h": fmtHour(m.from), text: L(m.pt, m.en) }));
     });
     if (s.open) bar.appendChild(h("i", { style: "left:" + ((s.pos - s.day.open) / span * 100).toFixed(2) + "%" }));
-    bar.appendChild(h("u", { style: "left:" + ((sun / 60 - s.day.open) / span * 100).toFixed(2) + "%", title: L("Pôr do sol", "Sunset") }));
     $("#rhythmNow").textContent = s.open
       ? L("Agora no Polvo: ", "Right now at O Polvo: ") + (current ? L(current.pt, current.en).toLowerCase() : "") +
         L(". O sol põe-se às ", ". The sun sets at ") + Shared.fromMin(sun) + "."
       : L("Estamos fechados neste momento. Abrimos às ", "We're closed right now. We open at ") + fmtHour(s.opens) + ".";
+  }
+
+  /* ---------- Painel do topo: o sol de hoje e os pratos em destaque ---------- */
+  var arcDone = false;
+  function setArc(f) {
+    var path = $("#arcFeito"), len = path.getTotalLength(), pt = path.getPointAtLength(len * f);
+    path.style.strokeDasharray = len; path.style.strokeDashoffset = len * (1 - f);
+    ["#arcSol", "#arcHalo"].forEach(function (id) { $(id).setAttribute("cx", pt.x.toFixed(1)); $(id).setAttribute("cy", pt.y.toFixed(1)); });
+  }
+  function renderArc(today, times) {
+    var f = Math.max(0, Math.min(1, (today.minutes - times.rise) / (times.set - times.rise))), left = times.set - today.minutes;
+    $("#hojeData").textContent = fmtDate(today.date, { weekday: "short" }).slice(0, 3) + ", " + fmtDate(today.date, { day: "numeric", month: "short" }).replace(/\./g, "");
+    $("#arcNasce").textContent = Shared.fromMin(times.rise);
+    $("#arcPoe").textContent = Shared.fromMin(times.set);
+    var span = (left >= 60 ? Math.floor(left / 60) + " h " : "") + (left % 60) + " min";
+    $("#arcLegenda").textContent = today.minutes < times.rise ? L("o sol ainda não nasceu", "the sun isn't up yet")
+      : left <= 0 ? L("o sol já se pôs", "the sun has set") : L("faltam " + span + " para o pôr do sol", span + " until sunset");
+    if (arcDone || !motion) { arcDone = true; return setArc(f); }
+    // primeira vez: o sol percorre o arco até à hora atual
+    arcDone = true; setArc(0);
+    var start = performance.now() + 900, raf = 0;
+    setTimeout(function () { cancelAnimationFrame(raf); setArc(f); }, 3200);
+    (function step(now) {
+      var p = Math.max(0, Math.min(1, (now - start) / 1900));
+      setArc(f * (1 - Math.pow(1 - p, 3)));
+      if (p < 1) raf = requestAnimationFrame(step);
+    })(performance.now());
+  }
+
+  var VITRINE = [
+    { pt: "Polvo", en: "Octopus", ids: ["p2", "p5", "p4"] },
+    { pt: "Peixe", en: "Fish", ids: ["p1", "p8", "p9"] },
+    { pt: "Carnes", en: "Meat", ids: ["c3", "c7", "c4"] }
+  ], vt = 0;
+  function renderVitrine(swap) {
+    var tabs = $("#vtTabs"), list = $("#vtList"); tabs.textContent = ""; list.textContent = "";
+    VITRINE.forEach(function (g, i) {
+      var bar = h("i"), on = i === vt;
+      // a barra do separador ativo enche e, ao acabar, passa ao seguinte
+      if (on) bar.addEventListener("animationend", function () { vt = (vt + 1) % VITRINE.length; renderVitrine(true); });
+      tabs.appendChild(h("button", { type: "button", role: "tab", "aria-selected": String(on), class: on ? "on" : "", onclick: function () { vt = i; renderVitrine(true); } }, [L(g.pt, g.en), bar]));
+    });
+    list.classList.toggle("troca", !!swap);
+    VITRINE[vt].ids.forEach(function (id, i) {
+      var d = P.menu.find(function (x) { return x.id === id; });
+      if (d) list.appendChild(h("div", { class: "vt-row", style: "--i:" + i }, [h("span", { text: L(d.pt, d.en) }), h("b", { text: money.format(d.price) })]));
+    });
   }
 
   /* ---------- Menu ---------- */
@@ -164,15 +225,26 @@
   function inCat(d, c) { return c === "all" || (c === "polvo" ? !!d.polvo : d.cat === c); }
 
   function renderTabs() {
-    var box = $("#tabs"); box.textContent = "";
+    var box = $("#tabs");
+    $$("button", box).forEach(function (b) { b.remove(); });
     TABS.forEach(function (c) {
       var n = P.menu.filter(function (d) { return inCat(d, c.id); }).length;
       box.appendChild(h("button", {
         type: "button", role: "tab", "aria-selected": String(cat === c.id),
-        onclick: function () { cat = c.id; menuAnim = true; renderTabs(); renderMenu(); drop($('#tabs [aria-selected="true"]')); }
+        onclick: function () { cat = c.id; menuAnim = true; renderTabs(); renderMenu(); }
       }, [L(c.pt, c.en), h("small", { text: String(n) })]));
     });
+    placeTabInd();
   }
+  // a cápsula colorida desliza até ao separador escolhido
+  function placeTabInd() {
+    var on = $('#tabs [aria-selected="true"]'), ind = $("#tabInd");
+    if (!on) return;
+    ind.style.width = on.offsetWidth + "px";
+    ind.style.transform = "translateX(" + (on.offsetLeft - 5) + "px)";
+  }
+  window.addEventListener("resize", placeTabInd);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(placeTabInd);
 
   function setQty(id, n) {
     if (n <= 0) delete picks[id]; else picks[id] = Math.min(n, 20);
@@ -456,45 +528,75 @@
     }));
   });
 
-  /* ---------- Navegação e entradas ---------- */
-  var nav = $("#nav"), gust = 0, lastY = window.scrollY, revealCheck = function () {};
+  /* ---------- Cabeçalho, menu de telemóvel e perguntas ---------- */
+  var nav = $("#nav"), root = document.documentElement, revealCheck = function () {}, heroMove = function () {};
   function onScroll() {
-    revealCheck();
-    var y = window.scrollY, room = document.documentElement.scrollHeight - window.innerHeight;
-    nav.classList.toggle("stuck", y > 40);
+    revealCheck(); heroMove();
+    var y = window.scrollY, room = root.scrollHeight - window.innerHeight;
+    nav.classList.toggle("stuck", y > 24);
     nav.style.setProperty("--prog", room > 0 ? Math.min(1, y / room).toFixed(4) : "0");
-    gust += Math.max(-1.5, Math.min(1.5, (y - lastY) * 0.02)); lastY = y;
   }
   window.addEventListener("scroll", onScroll, { passive: true }); onScroll();
 
-  // O toldo ao vento: uma brisa lenta, mais as rajadas de quem mexe o ponteiro ou desloca a página
+  var burger = $("#burger");
+  function setMenu(open) {
+    root.classList.toggle("menu-open", open);
+    root.style.overflow = open ? "hidden" : "";
+    burger.setAttribute("aria-expanded", String(open));
+  }
+  burger.addEventListener("click", function () { setMenu(!root.classList.contains("menu-open")); });
+  $$("#overlay a").forEach(function (a) { a.addEventListener("click", function () { setMenu(false); }); });
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape") setMenu(false); });
+  window.addEventListener("resize", function () { if (window.innerWidth > 900) setMenu(false); });
+
+  $$("#faq .faq-q").forEach(function (q) {
+    q.addEventListener("click", function () {
+      var open = q.getAttribute("aria-expanded") === "true";
+      $$("#faq .faq-q").forEach(function (o) { o.setAttribute("aria-expanded", "false"); });
+      q.setAttribute("aria-expanded", String(!open));
+    });
+  });
+
+  $("#stPratos").dataset.count = P.menu.length;
+  $("#stPolvo").dataset.count = P.menu.filter(function (d) { return d.polvo; }).length;
+
+  /* ---------- Movimento ligado ao ponteiro e ao deslocamento ---------- */
+  // Cartões com foco de luz que segue o ponteiro
+  document.addEventListener("pointermove", function (e) {
+    var card = e.target.closest && e.target.closest(".spot");
+    if (!card) return;
+    var r = card.getBoundingClientRect();
+    card.style.setProperty("--mx", (e.clientX - r.left) + "px");
+    card.style.setProperty("--my", (e.clientY - r.top) + "px");
+  }, { passive: true });
+
+  // O topo inclina o painel e desloca a luz de fundo conforme o ponteiro e o deslocamento
   (function () {
-    var toldo = $(".hero .toldo");
-    if (!motion || !toldo) return;
-    var wind = 0, vel = 0, raf = 0, seen = true, lastX = null, t0 = performance.now();
-    function tick(now) {
+    var hero = $(".hero");
+    if (!motion || !hero) return;
+    var tx = 0, ty = 0, x = 0, y = 0, raf = 0;
+    function tick() {
       raf = 0;
-      var t = (now - t0) / 1000;
-      gust = Math.max(-5, Math.min(5, gust)) * 0.93;
-      vel = (vel + (Math.sin(t * 0.8) * 0.5 + Math.sin(t * 1.9 + 1.3) * 0.22 + gust - wind) * 0.05) * 0.9;
-      wind += vel;
-      toldo.style.setProperty("--vento", wind.toFixed(3));
-      toldo.style.setProperty("--sy", (1 + Math.sin(t * 1.3) * 0.012 + Math.abs(wind) * 0.008).toFixed(4));
-      wake();
+      x += (tx - x) * 0.07; y += (ty - y) * 0.07;
+      hero.style.setProperty("--px", x.toFixed(4));
+      hero.style.setProperty("--py", y.toFixed(4));
+      if (Math.abs(tx - x) + Math.abs(ty - y) > 0.002) raf = requestAnimationFrame(tick);
     }
-    function wake() { if (!raf && seen && !document.hidden) raf = requestAnimationFrame(tick); }
-    window.addEventListener("pointermove", function (e) {
-      if (lastX != null) gust += Math.max(-0.6, Math.min(0.6, (e.clientX - lastX) * 0.012));
-      lastX = e.clientX;
-    }, { passive: true });
-    document.addEventListener("visibilitychange", wake);
-    if ("IntersectionObserver" in window) new IntersectionObserver(function (en) { seen = en[0].isIntersecting; wake(); }).observe(toldo);
-    wake();
+    function wake() { if (!raf) raf = requestAnimationFrame(tick); }
+    if (window.matchMedia("(hover: hover)").matches) {
+      hero.addEventListener("pointermove", function (e) {
+        tx = e.clientX / window.innerWidth * 2 - 1; ty = e.clientY / window.innerHeight * 2 - 1; wake();
+      }, { passive: true });
+      hero.addEventListener("pointerleave", function () { tx = ty = 0; wake(); });
+    }
+    heroMove = function () {
+      if (window.scrollY < hero.offsetHeight) hero.style.setProperty("--sy", (window.scrollY / hero.offsetHeight).toFixed(4));
+    };
   })();
 
   // Entradas ao deslocar a página
   function setupReveal() {
-    if (!motion) return;
+    if (!motion) { $$("[data-count]").forEach(function (el) { el.textContent = el.dataset.count; }); return; }
     // medido à mão: um IntersectionObserver não vê o que está cortado por clip-path
     var waiting = [];
     revealCheck = function () {
@@ -502,33 +604,26 @@
       waiting = waiting.filter(function (el) {
         if (el.getBoundingClientRect().top > line) return true;
         el.classList.add("in");
+        $$("[data-count]", el).forEach(function (n) { countUp(n, +n.dataset.count); });
         return false;
       });
     };
-    function mark(sel, cls, from) {
-      $$(sel).forEach(function (el) {
-        el.classList.add(cls);
-        if (from != null) el.style.setProperty("--i", from + Array.prototype.indexOf.call(el.parentNode.children, el));
-        waiting.push(el);
-      });
-    }
+    $$("h2").forEach(function (el) { el.classList.add("rvh"); waiting.push(el); });
+    $$("section.light").forEach(function (el) { el.classList.add("rvs"); waiting.push(el); });
+    $$("[data-rv]").forEach(function (el) {
+      var sibs = Array.prototype.filter.call(el.parentNode.children, function (c) { return c.hasAttribute("data-rv"); });
+      el.classList.add("rv");
+      el.style.setProperty("--i", Math.min(sibs.indexOf(el), 6));
+      waiting.push(el);
+    });
     window.addEventListener("resize", revealCheck);
-    mark("h2", "rvh");
-    mark(".pontos article, .bloco", "rv-rule", 0);
-    mark(".servicos", "rv-list");
-    mark(".faixa, .res-pitch, .map", "wipe");
-    mark(".res-pitch-in > p, .poente", "rv", 3);
-    mark(".menu-topo .search, .menu-tip, .tabs, #menuList, .menu-foot, .widget fieldset, .submit, .foto", "rv");
-    mark(".foot-grid > div", "rv", 0);
-    mark(".toldo-fim", "rvt");
     revealCheck();
   }
-  setTimeout(function () { $("#rhythm").classList.remove("intro"); }, 3600);
   if ("IntersectionObserver" in window) {
     var spy = new IntersectionObserver(function (entries) {
       entries.forEach(function (en) {
         if (!en.isIntersecting) return;
-        $$(".nav-links a").forEach(function (a) { a.classList.toggle("on", a.getAttribute("href") === "#" + en.target.id); });
+        $$(".hd-links a").forEach(function (a) { a.classList.toggle("on", a.getAttribute("href") === "#" + en.target.id); });
       });
     }, { rootMargin: "-45% 0px -50% 0px" });
     $$("main section[id]").forEach(function (s) { spy.observe(s); });
