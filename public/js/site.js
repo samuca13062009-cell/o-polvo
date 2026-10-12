@@ -1,4 +1,4 @@
-/* O Polvo — site público: idioma, estado do dia, menu interativo e reservas. */
+/* O Polvo, site público: idioma, estado do dia, menu interativo e reservas. */
 (function () {
   "use strict";
   var P = window.POLVO;
@@ -15,6 +15,34 @@
     });
     (kids || []).forEach(function (c) { if (c) el.appendChild(typeof c === "string" ? document.createTextNode(c) : c); });
     return el;
+  }
+
+  /* ---------- Movimento ---------- */
+  var motion = document.documentElement.classList.contains("motion");
+  var EASE = "cubic-bezier(.16, 1, .3, 1)";
+  function anim(el, frames, ms) {
+    if (motion && el && el.animate) el.animate(frames, { duration: ms || 320, easing: EASE });
+  }
+  // o toldinho de um item escolhido desce para o lugar
+  function drop(el) { anim(el, [{ backgroundPosition: "center -6px, 0 0" }, { backgroundPosition: "center 3px, 0 0" }], 420); }
+  function rise(el, from) { anim(el, [{ transform: "translateY(" + (from || 60) + "%)", opacity: 0 }, { transform: "none", opacity: 1 }], 300); }
+
+  // parte os títulos em palavras, para entrarem uma a uma
+  function splitHeads() {
+    if (!motion) return;
+    $$("h2").forEach(function (h2) {
+      if (h2.querySelector(".w")) return;
+      var i = 0, walker = document.createTreeWalker(h2, NodeFilter.SHOW_TEXT), nodes = [];
+      while (walker.nextNode()) nodes.push(walker.currentNode);
+      nodes.forEach(function (node) {
+        var frag = document.createDocumentFragment();
+        node.nodeValue.split(/(\s+)/).forEach(function (part) {
+          if (!part) return;
+          frag.appendChild(/^\s+$/.test(part) ? document.createTextNode(" ") : h("span", { class: "w", style: "--i:" + i++, text: part }));
+        });
+        node.parentNode.replaceChild(frag, node);
+      });
+    });
   }
 
   /* ---------- Idioma ---------- */
@@ -39,12 +67,16 @@
     });
     $$(".lang button").forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.lang === lang)); });
     renderStatic(); renderDay(); renderTabs(); renderMenu(); renderTray(); renderWidget();
+    splitHeads();
   }
   $$(".lang button").forEach(function (b) {
     b.addEventListener("click", function () {
       lang = b.dataset.lang;
       try { localStorage.setItem("opolvo.lang", lang); } catch (_) { /* sem armazenamento */ }
-      applyLang();
+      if (motion && document.startViewTransition) {
+        var vt = document.startViewTransition(applyLang), quiet = function () { /* transição saltada: o idioma muda na mesma */ };
+        vt.ready.catch(quiet); vt.finished.catch(quiet);
+      } else applyLang();
     });
   });
 
@@ -81,9 +113,7 @@
   /* ---------- Blocos estáticos dependentes do idioma ---------- */
   function renderStatic() {
     var sv = $("#services"); sv.textContent = "";
-    [0, 1].forEach(function (copy) {
-      P.services.forEach(function (s) { sv.appendChild(h("li", { text: L(s[0], s[1]), "aria-hidden": copy ? "true" : null })); });
-    });
+    P.services.forEach(function (s, i) { sv.appendChild(h("li", { text: L(s[0], s[1]), style: "--i:" + i })); });
     var pay = $("#pay"); pay.textContent = "";
     P.payments.forEach(function (p) { pay.appendChild(h("li", { text: L(p[0], p[1]) })); });
     $("#year").textContent = Shared.nowLisbon().date.slice(0, 4);
@@ -110,23 +140,25 @@
 
     // Barra do dia
     var bar = $("#rhythmBar"), span = s.day.close - s.day.open, current = null; bar.textContent = "";
+    bar.setAttribute("data-fim", fmtHour(s.day.close));
     P.moments.forEach(function (m, i) {
       var to = Math.min(i + 1 < P.moments.length ? P.moments[i + 1].from : s.day.close, s.day.close);
       if (to <= m.from) return;
       var on = s.open && s.pos >= m.from && s.pos < to;
       if (on) current = m;
-      bar.appendChild(h("span", { class: on ? "now" : "", style: "flex:" + (to - m.from), text: L(m.pt, m.en) }));
+      bar.appendChild(h("span", { class: on ? "now" : (s.open && s.pos >= to ? "past" : ""), style: "flex:" + (to - m.from), "data-h": fmtHour(m.from), text: L(m.pt, m.en) }));
     });
     if (s.open) bar.appendChild(h("i", { style: "left:" + ((s.pos - s.day.open) / span * 100).toFixed(2) + "%" }));
     bar.appendChild(h("u", { style: "left:" + ((sun / 60 - s.day.open) / span * 100).toFixed(2) + "%", title: L("Pôr do sol", "Sunset") }));
     $("#rhythmNow").textContent = s.open
       ? L("Agora no Polvo: ", "Right now at O Polvo: ") + (current ? L(current.pt, current.en).toLowerCase() : "") +
-        L(". O ponto dourado marca o pôr do sol, às ", ". The golden dot marks sunset, at ") + Shared.fromMin(sun) + "."
-      : L("Estamos fechados neste momento — abrimos às ", "We're closed right now — we open at ") + fmtHour(s.opens) + ".";
+        L(". O sol põe-se às ", ". The sun sets at ") + Shared.fromMin(sun) + "."
+      : L("Estamos fechados neste momento. Abrimos às ", "We're closed right now. We open at ") + fmtHour(s.opens) + ".";
   }
 
   /* ---------- Menu ---------- */
   var cat = "all", term = "", picks = {};
+  var menuAnim = false, bump = null, shownTotal = 0, totalRaf = 0, totalEnd = 0;
   function norm(s) { return String(s).normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase(); }
   var TABS = P.categories.concat([{ id: "polvo", pt: "Só polvo", en: "Octopus only" }]);
   function inCat(d, c) { return c === "all" || (c === "polvo" ? !!d.polvo : d.cat === c); }
@@ -137,19 +169,21 @@
       var n = P.menu.filter(function (d) { return inCat(d, c.id); }).length;
       box.appendChild(h("button", {
         type: "button", role: "tab", "aria-selected": String(cat === c.id),
-        onclick: function () { cat = c.id; renderTabs(); renderMenu(); }
+        onclick: function () { cat = c.id; menuAnim = true; renderTabs(); renderMenu(); drop($('#tabs [aria-selected="true"]')); }
       }, [L(c.pt, c.en), h("small", { text: String(n) })]));
     });
   }
 
   function setQty(id, n) {
     if (n <= 0) delete picks[id]; else picks[id] = Math.min(n, 20);
+    bump = id;
     renderMenu(); renderTray();
   }
 
   function renderMenu() {
     var list = $("#menuList"); list.textContent = "";
-    var needle = norm(term), shown = 0;
+    list.classList.toggle("entra", menuAnim);
+    var needle = norm(term), shown = 0, row = 0;
     ["peixe", "carnes", "sopas"].forEach(function (c) {
       var items = P.menu.filter(function (d) {
         return d.cat === c && inCat(d, cat) && (!needle || norm(d.pt + " " + d.en + " " + (d.gloss || "")).indexOf(needle) !== -1);
@@ -164,17 +198,33 @@
         if (lang === "en" && d.gloss) name.appendChild(h("i", { text: d.gloss }));
         if (d.for2) name.appendChild(h("span", { class: "tag two", text: L("2 pessoas", "for 2") }));
         var qty = h("span", { class: "qty" }, [
-          n ? h("button", { type: "button", "aria-label": L("Retirar ", "Remove ") + L(d.pt, d.en), text: "−", onclick: function () { setQty(d.id, n - 1); } }) : null,
-          n ? h("b", { text: String(n) }) : null,
-          h("button", { type: "button", "aria-label": L("Juntar ", "Add ") + L(d.pt, d.en), text: "+", onclick: function () { setQty(d.id, n + 1); } })
+          n ? h("button", { type: "button", "aria-label": L("Retirar ", "Remove ") + L(d.pt, d.en), class: "menos", onclick: function () { setQty(d.id, n - 1); } }) : null,
+          n ? h("b", { text: String(n), class: bump === d.id ? "salta" : "" }) : null,
+          h("button", { type: "button", "aria-label": L("Juntar ", "Add ") + L(d.pt, d.en), class: "mais", onclick: function () { setQty(d.id, n + 1); } })
         ]);
-        group.appendChild(h("div", { class: "dish" + (n ? " sel" : "") }, [
-          name, h("span", { class: "dots" }), h("span", { class: "price", text: money.format(d.price) }), qty
+        group.appendChild(h("div", { class: "dish" + (n ? " sel" : ""), style: "--i:" + Math.min(row++, 16) }, [
+          name, h("span", { class: "price", text: money.format(d.price) }), qty
         ]));
       });
       list.appendChild(group);
     });
     if (!shown) list.appendChild(h("p", { class: "menu-empty", text: L("Nenhum prato corresponde à procura.", "No dish matches your search.") }));
+    menuAnim = false; bump = null;
+  }
+
+  // o total da mesa conta até ao novo valor
+  function showTotal(total) {
+    var el = $("#trayTotal"), from = shownTotal, start = performance.now();
+    cancelAnimationFrame(totalRaf); clearTimeout(totalEnd);
+    // garante o valor certo mesmo que o separador esteja em segundo plano
+    totalEnd = setTimeout(function () { cancelAnimationFrame(totalRaf); shownTotal = total; el.textContent = money.format(total); }, 600);
+    if (!motion || from === total) { shownTotal = total; el.textContent = money.format(total); return; }
+    (function step(now) {
+      var p = Math.min(1, (now - start) / 420), e = 1 - Math.pow(1 - p, 3);
+      shownTotal = from + (total - from) * e;
+      el.textContent = money.format(shownTotal);
+      if (p < 1) totalRaf = requestAnimationFrame(step); else shownTotal = total;
+    })(start);
   }
 
   function pickList() {
@@ -183,14 +233,14 @@
   function renderTray() {
     var items = pickList(), tray = $("#tray");
     tray.hidden = !items.length;
-    if (!items.length) return;
+    if (!items.length) { shownTotal = 0; return; }
     var count = items.reduce(function (a, x) { return a + x.n; }, 0);
     var total = items.reduce(function (a, x) { return a + x.n * x.d.price; }, 0);
     $("#trayCount").textContent = L("A sua mesa · ", "Your table · ") + count + " " + (count === 1 ? L("prato", "dish") : L("pratos", "dishes"));
     $("#trayItems").textContent = items.map(function (x) { return x.n + "× " + L(x.d.pt, x.d.en); }).join(", ");
-    $("#trayTotal").textContent = money.format(total);
+    showTotal(total);
   }
-  $("#menuSearch").addEventListener("input", function (e) { term = e.target.value; renderMenu(); });
+  $("#menuSearch").addEventListener("input", function (e) { term = e.target.value; menuAnim = true; renderMenu(); });
   $("#trayClear").addEventListener("click", function () { picks = {}; renderMenu(); renderTray(); });
   $("#trayGo").addEventListener("click", function () {
     var notes = form.elements.notes;
@@ -204,7 +254,7 @@
   var form = $("#resForm");
   var today = Shared.nowLisbon().date;
   var state = { people: 2, date: today, time: null, zone: "any", slots: null, closed: null, settings: { maxParty: 12, maxDaysAhead: 90, closedWeekdays: [], blockedDates: [] }, loading: true };
-  var loadSeq = 0, lastBooking = null;
+  var loadSeq = 0, lastBooking = null, slotsAnim = false, lastSummary = "";
 
   function isClosed(date) { return !!Shared.closedReason(state.settings, date); }
 
@@ -219,7 +269,7 @@
       if (seq !== loadSeq) return;
       state.slots = null; state.loadError = true;
     }
-    state.loading = false;
+    state.loading = false; slotsAnim = true;
     renderWidget();
   }
 
@@ -256,6 +306,7 @@
     if (!Shared.isDate(date) || date < today) return;
     state.date = date; state.time = null;
     setErr("date", ""); renderDays(); loadDay();
+    drop($('#days [aria-checked="true"]'));
   }
   $("#otherDate").addEventListener("change", function (e) { pickDate(e.target.value); });
 
@@ -263,8 +314,9 @@
     var box = $("#slots"); box.textContent = "";
     if (state.loading && !state.slots) { box.appendChild(h("p", { class: "slots-msg", text: L("A ver a disponibilidade…", "Checking availability…") })); return; }
     if (state.loadError) { box.appendChild(h("p", { class: "slots-msg", text: L("Não foi possível ver a disponibilidade. Ligue 261 931 400.", "Couldn't check availability. Please call 261 931 400.") })); return; }
-    if (state.closed) { box.appendChild(h("p", { class: "slots-msg", text: L("Não aceitamos reservas neste dia", "No bookings on this day") + (state.closed !== "Encerrado" ? " — " + state.closed : "") + "." })); return; }
-    var sun = sunSlot(), any = false;
+    if (state.closed) { box.appendChild(h("p", { class: "slots-msg", text: L("Não aceitamos reservas neste dia", "No bookings on this day") + (state.closed !== "Encerrado" ? ": " + state.closed : "") + "." })); return; }
+    var sun = sunSlot(), any = false, n = 0;
+    box.classList.toggle("entra", slotsAnim); slotsAnim = false;
     [["lunch", L("Almoço", "Lunch")], ["dinner", L("Jantar", "Dinner")]].forEach(function (p) {
       var slots = state.slots.filter(function (s) { return s.period === p[0] && !s.past; });
       if (!slots.length) return;
@@ -277,14 +329,14 @@
         if (!free && state.time === s.time) state.time = null;
         row.appendChild(h("button", {
           type: "button", role: "radio", disabled: !free, "aria-checked": String(state.time === s.time),
-          class: "slot" + (isSun && free ? " sun" : "") + (free && !isSun && s.left <= 8 ? " few" : ""),
-          onclick: function () { state.time = s.time; setErr("time", ""); renderSlots(); renderSummary(); }
+          class: "slot" + (isSun && free ? " sun" : "") + (free && !isSun && s.left <= 8 ? " few" : ""), style: "--i:" + n++,
+          onclick: function () { state.time = s.time; setErr("time", ""); renderSlots(); renderSummary(); drop($('#slots [aria-checked="true"]')); }
         }, [h("b", { text: s.time }), h("small", { text: note })]));
       });
       box.appendChild(h("h4", { text: p[1] }));
       box.appendChild(row);
     });
-    if (!any) box.appendChild(h("p", { class: "slots-msg", text: L("Já não há horários para este dia — escolha outro.", "No times left for this day — pick another.") }));
+    if (!any) box.appendChild(h("p", { class: "slots-msg", text: L("Já não há horários para este dia. Escolha outro.", "No times left for this day. Pick another.") }));
   }
 
   function zoneName(z) { return { any: L("Sem preferência", "No preference"), sala: L("Sala", "Dining room"), esplanada: L("Esplanada", "Terrace") }[z]; }
@@ -297,6 +349,8 @@
     var el = $("#summary");
     el.classList.toggle("wait", !state.time);
     el.textContent = state.time ? summaryText() : L("Escolha o dia e a hora para continuar.", "Pick a day and a time to continue.");
+    if (lastSummary && el.textContent !== lastSummary) rise(el, 30);
+    lastSummary = el.textContent;
   }
 
   function renderSunset() {
@@ -305,7 +359,7 @@
       : L("Pôr do sol a ", "Sunset on ") + fmtDate(state.date, { day: "numeric", month: "short" }) + L(": ", ": ")) + Shared.fromMin(sun);
     $("#sunsetText").textContent = slot
       ? L("Reserve para as " + slot.time + " e veja-o da mesa.", "Book for " + slot.time + " and watch it from your table.")
-      : L("Nesta data põe-se fora das horas de refeição — a vista, essa, está cá o dia todo.", "On this date it sets outside meal times — the view, though, is here all day.");
+      : L("Nesta data põe-se fora das horas de refeição. A vista está cá o dia todo.", "On this date it sets outside meal times. The view is here all day.");
   }
 
   function renderWidget() {
@@ -317,14 +371,14 @@
     $("#pNote").textContent = state.people >= max ? L("Mais de " + max + "? Ligue 261 931 400.", "More than " + max + "? Call 261 931 400.") : "";
     $$("#zones button").forEach(function (b) { b.setAttribute("aria-checked", String(b.dataset.zone === state.zone)); });
     $("#zoneHint").textContent = state.zone === "esplanada"
-      ? L("A esplanada depende do tempo — se for preciso, passamos a mesa para a sala.", "The terrace depends on the weather — if need be, we'll move your table indoors.") : "";
+      ? L("A esplanada depende do tempo. Se for preciso, passamos a mesa para a sala.", "The terrace depends on the weather. If need be, we'll move your table indoors.") : "";
     renderDays(); renderSlots(); renderSummary(); renderSunset();
     if (lastBooking) $("#doneText").textContent = lastBooking.text();
   }
 
-  $("#pMinus").addEventListener("click", function () { state.people--; renderWidget(); });
-  $("#pPlus").addEventListener("click", function () { state.people++; renderWidget(); });
-  $$("#zones button").forEach(function (b) { b.addEventListener("click", function () { state.zone = b.dataset.zone; renderWidget(); }); });
+  $("#pMinus").addEventListener("click", function () { state.people--; renderWidget(); rise($("#pOut"), -70); });
+  $("#pPlus").addEventListener("click", function () { state.people++; renderWidget(); rise($("#pOut"), 70); });
+  $$("#zones button").forEach(function (b) { b.addEventListener("click", function () { state.zone = b.dataset.zone; renderWidget(); drop(b); }); });
 
   function setErr(key, msg) {
     var el = $('[data-err="' + key + '"]', form);
@@ -353,7 +407,8 @@
       var snapshot = summaryText();
       lastBooking.text = function () { return snapshot; };
       $("#doneText").textContent = snapshot;
-      $("#doneCode").textContent = res.code || "—";
+      var plate = $("#doneCode"); plate.textContent = ""; plate.setAttribute("aria-label", res.code || "");
+      String(res.code || "—").split("").forEach(function (ch, i) { plate.appendChild(h("span", { class: "c", "aria-hidden": "true", style: "--i:" + i, text: ch })); });
       form.hidden = true; $("#done").hidden = false; $("#done").focus();
       $("#widget").scrollIntoView({ block: "center" });
     } catch (err) {
@@ -396,42 +451,80 @@
   $("#mapBtn").addEventListener("click", function () {
     var box = $("#map"); box.textContent = "";
     box.appendChild(h("iframe", {
-      title: L("Mapa — O Polvo, Santa Cruz", "Map — O Polvo, Santa Cruz"), loading: "lazy", referrerpolicy: "no-referrer-when-downgrade",
+      title: L("Mapa: O Polvo, Santa Cruz", "Map: O Polvo, Santa Cruz"), loading: "lazy", referrerpolicy: "no-referrer-when-downgrade",
       src: "https://www.google.com/maps?q=" + encodeURIComponent(P.place.mapQuery) + "&z=16&output=embed"
     }));
   });
 
-  /* ---------- Tentáculos decorativos (os mesmos do menu impresso) ---------- */
-  function tentacle(o) {
-    var N = 420, ds = o.len / N, x = o.x, y = o.y, hd = o.heading * Math.PI / 180;
-    var Lp = [], Rp = [], suckers = "", next = 0, dist = 0, f = function (n) { return n.toFixed(1); };
-    for (var i = 0; i <= N; i++) {
-      var s = i / N;
-      hd += (o.sway * (1 - s) * Math.cos(s * Math.PI * 1.4) + o.curl * Math.pow(s, o.pow)) * ds;
-      x += Math.cos(hd) * ds; y += Math.sin(hd) * ds; dist += ds;
-      var w = o.width * Math.pow(1 - s, 0.8) + 0.5, nx = -Math.sin(hd), ny = Math.cos(hd);
-      Lp.push(f(x + nx * w / 2) + "," + f(y + ny * w / 2));
-      Rp.push(f(x - nx * w / 2) + "," + f(y - ny * w / 2));
-      if (dist >= next && w > 2) {
-        suckers += '<circle cx="' + f(x + o.side * nx * w * 0.2) + '" cy="' + f(y + o.side * ny * w * 0.2) + '" r="' + f(w * 0.17) + '"/>';
-        next = dist + w * 0.56;
-      }
-    }
-    return '<path fill="' + o.fill + '" d="M' + Lp.join(" L") + " L" + Rp.reverse().join(" L") + 'Z"/>' +
-      '<g fill="none" stroke="' + o.ring + '" stroke-width=".7">' + suckers + "</g>";
-  }
-  $(".deco-menu").innerHTML = tentacle({ x: 206, y: 24, heading: 172, len: 215, width: 24, sway: -0.018, curl: 0.17, pow: 3, side: 1, fill: "#eadfc8", ring: "#f6f0e3" });
-  $(".deco-res").innerHTML = tentacle({ x: -6, y: 170, heading: -8, len: 230, width: 26, sway: 0.018, curl: -0.16, pow: 3, side: -1, fill: "#1f5f82", ring: "#0e2a43" });
-
   /* ---------- Navegação e entradas ---------- */
-  var nav = $("#nav");
-  function onScroll() { nav.classList.toggle("stuck", window.scrollY > 40); }
+  var nav = $("#nav"), gust = 0, lastY = window.scrollY, revealCheck = function () {};
+  function onScroll() {
+    revealCheck();
+    var y = window.scrollY, room = document.documentElement.scrollHeight - window.innerHeight;
+    nav.classList.toggle("stuck", y > 40);
+    nav.style.setProperty("--prog", room > 0 ? Math.min(1, y / room).toFixed(4) : "0");
+    gust += Math.max(-1.5, Math.min(1.5, (y - lastY) * 0.02)); lastY = y;
+  }
   window.addEventListener("scroll", onScroll, { passive: true }); onScroll();
+
+  // O toldo ao vento: uma brisa lenta, mais as rajadas de quem mexe o ponteiro ou desloca a página
+  (function () {
+    var toldo = $(".hero .toldo");
+    if (!motion || !toldo) return;
+    var wind = 0, vel = 0, raf = 0, seen = true, lastX = null, t0 = performance.now();
+    function tick(now) {
+      raf = 0;
+      var t = (now - t0) / 1000;
+      gust = Math.max(-5, Math.min(5, gust)) * 0.93;
+      vel = (vel + (Math.sin(t * 0.8) * 0.5 + Math.sin(t * 1.9 + 1.3) * 0.22 + gust - wind) * 0.05) * 0.9;
+      wind += vel;
+      toldo.style.setProperty("--vento", wind.toFixed(3));
+      toldo.style.setProperty("--sy", (1 + Math.sin(t * 1.3) * 0.012 + Math.abs(wind) * 0.008).toFixed(4));
+      wake();
+    }
+    function wake() { if (!raf && seen && !document.hidden) raf = requestAnimationFrame(tick); }
+    window.addEventListener("pointermove", function (e) {
+      if (lastX != null) gust += Math.max(-0.6, Math.min(0.6, (e.clientX - lastX) * 0.012));
+      lastX = e.clientX;
+    }, { passive: true });
+    document.addEventListener("visibilitychange", wake);
+    if ("IntersectionObserver" in window) new IntersectionObserver(function (en) { seen = en[0].isIntersecting; wake(); }).observe(toldo);
+    wake();
+  })();
+
+  // Entradas ao deslocar a página
+  function setupReveal() {
+    if (!motion) return;
+    // medido à mão: um IntersectionObserver não vê o que está cortado por clip-path
+    var waiting = [];
+    revealCheck = function () {
+      var line = window.innerHeight * 0.9;
+      waiting = waiting.filter(function (el) {
+        if (el.getBoundingClientRect().top > line) return true;
+        el.classList.add("in");
+        return false;
+      });
+    };
+    function mark(sel, cls, from) {
+      $$(sel).forEach(function (el) {
+        el.classList.add(cls);
+        if (from != null) el.style.setProperty("--i", from + Array.prototype.indexOf.call(el.parentNode.children, el));
+        waiting.push(el);
+      });
+    }
+    window.addEventListener("resize", revealCheck);
+    mark("h2", "rvh");
+    mark(".pontos article, .bloco", "rv-rule", 0);
+    mark(".servicos", "rv-list");
+    mark(".faixa, .res-pitch, .map", "wipe");
+    mark(".res-pitch-in > p, .poente", "rv", 3);
+    mark(".menu-topo .search, .menu-tip, .tabs, #menuList, .menu-foot, .widget fieldset, .submit, .foto", "rv");
+    mark(".foot-grid > div", "rv", 0);
+    mark(".toldo-fim", "rvt");
+    revealCheck();
+  }
+  setTimeout(function () { $("#rhythm").classList.remove("intro"); }, 3600);
   if ("IntersectionObserver" in window) {
-    var reveal = new IntersectionObserver(function (entries) {
-      entries.forEach(function (en) { if (en.isIntersecting) { en.target.classList.add("in"); reveal.unobserve(en.target); } });
-    }, { threshold: 0.2 });
-    $$(".reveal").forEach(function (el) { reveal.observe(el); });
     var spy = new IntersectionObserver(function (entries) {
       entries.forEach(function (en) {
         if (!en.isIntersecting) return;
@@ -439,11 +532,10 @@
       });
     }, { rootMargin: "-45% 0px -50% 0px" });
     $$("main section[id]").forEach(function (s) { spy.observe(s); });
-  } else {
-    $$(".reveal").forEach(function (el) { el.classList.add("in"); });
   }
 
   applyLang();
+  setupReveal();
   loadDay();
   setInterval(renderDay, 60000);
 })();

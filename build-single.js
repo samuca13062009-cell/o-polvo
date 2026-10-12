@@ -8,9 +8,16 @@ const PUB = path.join(__dirname, "public");
 const OUT = path.join(__dirname, "..");
 const read = (f) => fs.readFileSync(path.join(PUB, f), "utf8");
 
+// As fontes vão dentro do ficheiro, para funcionar sem servidor e sem rede
+function inlineFonts(css) {
+  return css.replace(/url\("\.\.\/(fonts\/[^"]+\.woff2)"\)/g, (_, f) =>
+    'url("data:font/woff2;base64,' + fs.readFileSync(path.join(PUB, f)).toString("base64") + '")');
+}
+
 function bundle(page, renames) {
   let html = read(page);
-  html = html.replace(/<link rel="stylesheet" href="(css\/[^"]+)">/g, (_, f) => "<style>\n" + read(f) + "</style>");
+  html = html.replace(/<link rel="preload" href="fonts\/[^"]+"[^>]*>\n?/g, "");
+  html = html.replace(/<link rel="stylesheet" href="(css\/[^"]+)">/g, (_, f) => "<style>\n" + inlineFonts(read(f)) + "</style>");
   html = html.replace(/<script src="(js\/[^"]+)"><\/script>/g, (_, f) => "<script>\n" + read(f).replace(/<\/script/gi, "<\\/script") + "</script>");
   Object.keys(renames).forEach((from) => { html = html.split(from).join(renames[from]); });
   return html;
