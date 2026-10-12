@@ -56,6 +56,19 @@
     });
   }
 
+  /* ---------- Teclado ---------- */
+  // Guarda que controlo tinha o foco dentro de um bloco e devolve-lho depois de o bloco ser redesenhado
+  function focusKey(box) {
+    var a = document.activeElement;
+    return a && a !== box && box.contains(a) ? (a.getAttribute("data-k") || "") : null;
+  }
+  function refocus(box, k) {
+    if (k == null) return;
+    var el = (k && box.querySelector('[data-k="' + k + '"]')) || (k && box.querySelector('[data-k="' + k.replace(/^rem:/, "add:") + '"]'));
+    if (el && !el.disabled) el.focus({ preventScroll: true });
+    else if (box.hasAttribute("tabindex")) box.focus({ preventScroll: true });
+  }
+
   /* ---------- Idioma ---------- */
   var lang = "pt";
   try {
@@ -76,7 +89,13 @@
       if (el.dataset.ptPlaceholder == null) el.dataset.ptPlaceholder = el.placeholder;
       el.placeholder = lang === "en" ? el.dataset.enPlaceholder : el.dataset.ptPlaceholder;
     });
+    $$("[data-en-aria-label]").forEach(function (el) {
+      if (el.dataset.ptAriaLabel == null) el.dataset.ptAriaLabel = el.getAttribute("aria-label");
+      el.setAttribute("aria-label", lang === "en" ? el.dataset.enAriaLabel : el.dataset.ptAriaLabel);
+    });
     $$(".lang button").forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.lang === lang)); });
+    document.title = L("O Polvo · Restaurante em Santa Cruz, cozinha portuguesa com vista para o mar", "O Polvo · Restaurant in Santa Cruz, Portuguese cooking with a view of the sea");
+    labelBurger(); labelPause();
     renderStatic(); renderDay(); renderTabs(); renderMenu(); renderTray(); renderWidget(); renderVitrine(false);
     splitHeads();
   }
@@ -185,6 +204,8 @@
     var span = (left >= 60 ? Math.floor(left / 60) + " h " : "") + (left % 60) + " min";
     $("#arcLegenda").textContent = today.minutes < times.rise ? L("o sol ainda não nasceu", "the sun isn't up yet")
       : left <= 0 ? L("o sol já se pôs", "the sun has set") : L("faltam " + span + " para o pôr do sol", span + " until sunset");
+    $("#arc").setAttribute("aria-label", L("Sol em Santa Cruz hoje: nasce às ", "Sun in Santa Cruz today: rises at ") + Shared.fromMin(times.rise) +
+      L(" e põe-se às ", " and sets at ") + Shared.fromMin(times.set) + "; " + $("#arcLegenda").textContent + ".");
     if (arcDone || !motion) { arcDone = true; return setArc(f); }
     // primeira vez: o sol percorre o arco até à hora atual
     arcDone = true; setArc(0);
@@ -203,13 +224,14 @@
     { pt: "Carnes", en: "Meat", ids: ["c3", "c7", "c4"] }
   ], vt = 0;
   function renderVitrine(swap) {
-    var tabs = $("#vtTabs"), list = $("#vtList"); tabs.textContent = ""; list.textContent = "";
+    var tabs = $("#vtTabs"), list = $("#vtList"), fk = focusKey(tabs); tabs.textContent = ""; list.textContent = "";
     VITRINE.forEach(function (g, i) {
       var bar = h("i"), on = i === vt;
       // a barra do separador ativo enche e, ao acabar, passa ao seguinte
       if (on) bar.addEventListener("animationend", function () { vt = (vt + 1) % VITRINE.length; renderVitrine(true); });
-      tabs.appendChild(h("button", { type: "button", role: "tab", "aria-selected": String(on), class: on ? "on" : "", onclick: function () { vt = i; renderVitrine(true); } }, [L(g.pt, g.en), bar]));
+      tabs.appendChild(h("button", { type: "button", "aria-pressed": String(on), "data-k": "vt:" + i, class: on ? "on" : "", onclick: function () { vt = i; renderVitrine(true); } }, [L(g.pt, g.en), bar]));
     });
+    refocus(tabs, fk);
     list.classList.toggle("troca", !!swap);
     VITRINE[vt].ids.forEach(function (id, i) {
       var d = P.menu.find(function (x) { return x.id === id; });
@@ -225,20 +247,21 @@
   function inCat(d, c) { return c === "all" || (c === "polvo" ? !!d.polvo : d.cat === c); }
 
   function renderTabs() {
-    var box = $("#tabs");
+    var box = $("#tabs"), fk = focusKey(box);
     $$("button", box).forEach(function (b) { b.remove(); });
     TABS.forEach(function (c) {
       var n = P.menu.filter(function (d) { return inCat(d, c.id); }).length;
       box.appendChild(h("button", {
-        type: "button", role: "tab", "aria-selected": String(cat === c.id),
+        type: "button", "aria-pressed": String(cat === c.id), "data-k": "tab:" + c.id,
         onclick: function () { cat = c.id; menuAnim = true; renderTabs(); renderMenu(); }
       }, [L(c.pt, c.en), h("small", { text: String(n) })]));
     });
+    refocus(box, fk);
     placeTabInd();
   }
   // a cápsula colorida desliza até ao separador escolhido
   function placeTabInd() {
-    var on = $('#tabs [aria-selected="true"]'), ind = $("#tabInd");
+    var on = $('#tabs [aria-pressed="true"]'), ind = $("#tabInd");
     if (!on) return;
     ind.style.width = on.offsetWidth + "px";
     ind.style.transform = "translateX(" + (on.offsetLeft - 5) + "px)";
@@ -253,7 +276,7 @@
   }
 
   function renderMenu() {
-    var list = $("#menuList"); list.textContent = "";
+    var list = $("#menuList"), fk = focusKey(list); list.textContent = "";
     list.classList.toggle("entra", menuAnim);
     var needle = norm(term), shown = 0, row = 0;
     ["peixe", "carnes", "sopas"].forEach(function (c) {
@@ -270,9 +293,9 @@
         if (lang === "en" && d.gloss) name.appendChild(h("i", { text: d.gloss }));
         if (d.for2) name.appendChild(h("span", { class: "tag two", text: L("2 pessoas", "for 2") }));
         var qty = h("span", { class: "qty" }, [
-          n ? h("button", { type: "button", "aria-label": L("Retirar ", "Remove ") + L(d.pt, d.en), class: "menos", onclick: function () { setQty(d.id, n - 1); } }) : null,
+          n ? h("button", { type: "button", "aria-label": L("Retirar um: ", "Remove one: ") + L(d.pt, d.en), "data-k": "rem:" + d.id, class: "menos", onclick: function () { setQty(d.id, n - 1); } }) : null,
           n ? h("b", { text: String(n), class: bump === d.id ? "salta" : "" }) : null,
-          h("button", { type: "button", "aria-label": L("Juntar ", "Add ") + L(d.pt, d.en), class: "mais", onclick: function () { setQty(d.id, n + 1); } })
+          h("button", { type: "button", "aria-label": L("Juntar à mesa: ", "Add to my table: ") + L(d.pt, d.en), "data-k": "add:" + d.id, class: "mais", onclick: function () { setQty(d.id, n + 1); } })
         ]);
         group.appendChild(h("div", { class: "dish" + (n ? " sel" : ""), style: "--i:" + Math.min(row++, 16) }, [
           name, h("span", { class: "price", text: money.format(d.price) }), qty
@@ -281,6 +304,7 @@
       list.appendChild(group);
     });
     if (!shown) list.appendChild(h("p", { class: "menu-empty", text: L("Nenhum prato corresponde à procura.", "No dish matches your search.") }));
+    refocus(list, fk);
     menuAnim = false; bump = null;
   }
 
@@ -320,6 +344,7 @@
     var rest = notes.value.split("\n").filter(function (l) { return l.indexOf("Pré-seleção:") !== 0; }).join("\n").trim();
     notes.value = (line + (rest ? "\n" + rest : "")).slice(0, 500);
     $("#reservas").scrollIntoView();
+    notes.focus({ preventScroll: true });
   });
 
   /* ---------- Reservas ---------- */
@@ -357,11 +382,11 @@
   }
 
   function renderDays() {
-    var box = $("#days"); box.textContent = "";
+    var box = $("#days"), fk = focusKey(box); box.textContent = "";
     for (var i = 0; i < 14; i++) {
       (function (date) {
         box.appendChild(h("button", {
-          type: "button", class: "day", role: "radio", "aria-checked": String(state.date === date), disabled: isClosed(date),
+          type: "button", class: "day", "aria-pressed": String(state.date === date), "data-k": "day:" + date, disabled: isClosed(date),
           "aria-label": fmtDate(date, { weekday: "long", day: "numeric", month: "long" }),
           onclick: function () { pickDate(date); }
         }, [
@@ -371,6 +396,7 @@
         ]));
       })(Shared.addDays(today, i));
     }
+    refocus(box, fk);
     var other = $("#otherDate");
     other.min = today; other.max = Shared.addDays(today, state.settings.maxDaysAhead); other.value = state.date;
   }
@@ -378,12 +404,12 @@
     if (!Shared.isDate(date) || date < today) return;
     state.date = date; state.time = null;
     setErr("date", ""); renderDays(); loadDay();
-    drop($('#days [aria-checked="true"]'));
+    drop($('#days [aria-pressed="true"]'));
   }
   $("#otherDate").addEventListener("change", function (e) { pickDate(e.target.value); });
 
   function renderSlots() {
-    var box = $("#slots"); box.textContent = "";
+    var box = $("#slots"), fk = focusKey(box); box.textContent = "";
     if (state.loading && !state.slots) { box.appendChild(h("p", { class: "slots-msg", text: L("A ver a disponibilidade…", "Checking availability…") })); return; }
     if (state.loadError) { box.appendChild(h("p", { class: "slots-msg", text: L("Não foi possível ver a disponibilidade. Ligue 261 931 400.", "Couldn't check availability. Please call 261 931 400.") })); return; }
     if (state.closed) { box.appendChild(h("p", { class: "slots-msg", text: L("Não aceitamos reservas neste dia", "No bookings on this day") + (state.closed !== "Encerrado" ? ": " + state.closed : "") + "." })); return; }
@@ -393,22 +419,23 @@
       var slots = state.slots.filter(function (s) { return s.period === p[0] && !s.past; });
       if (!slots.length) return;
       any = true;
-      var row = h("div", { class: "slot-row", role: "radiogroup", "aria-label": p[1] });
+      var row = h("div", { class: "slot-row", role: "group", "aria-label": p[1] });
       slots.forEach(function (s) {
         var free = s.left >= state.people, isSun = sun && sun.time === s.time;
         var note = !free ? (s.left === 0 ? L("Esgotado", "Full") : L("Só " + s.left + " lugares", "Only " + s.left + " seats"))
-          : isSun ? L("Pôr do sol", "Sunset") : s.left <= 8 ? L("Últimos lugares", "Last seats") : "";
+          : isSun ? L("Hora do pôr do sol", "Sunset time") : s.left <= 8 ? L("Últimos lugares", "Last seats") : "";
         if (!free && state.time === s.time) state.time = null;
         row.appendChild(h("button", {
-          type: "button", role: "radio", disabled: !free, "aria-checked": String(state.time === s.time),
+          type: "button", disabled: !free, "aria-pressed": String(state.time === s.time), "data-k": "slot:" + s.time,
           class: "slot" + (isSun && free ? " sun" : "") + (free && !isSun && s.left <= 8 ? " few" : ""), style: "--i:" + n++,
-          onclick: function () { state.time = s.time; setErr("time", ""); renderSlots(); renderSummary(); drop($('#slots [aria-checked="true"]')); }
+          onclick: function () { state.time = s.time; setErr("time", ""); renderSlots(); renderSummary(); drop($('#slots [aria-pressed="true"]')); }
         }, [h("b", { text: s.time }), h("small", { text: note })]));
       });
-      box.appendChild(h("h4", { text: p[1] }));
+      box.appendChild(h("h3", { class: "slots-h", text: p[1] }));
       box.appendChild(row);
     });
     if (!any) box.appendChild(h("p", { class: "slots-msg", text: L("Já não há horários para este dia. Escolha outro.", "No times left for this day. Pick another.") }));
+    refocus(box, fk);
   }
 
   function zoneName(z) { return { any: L("Sem preferência", "No preference"), sala: L("Sala", "Dining room"), esplanada: L("Esplanada", "Terrace") }[z]; }
@@ -430,8 +457,8 @@
     $("#sunsetTitle").textContent = (isToday ? L("Hoje o sol põe-se às ", "Today the sun sets at ")
       : L("Pôr do sol a ", "Sunset on ") + fmtDate(state.date, { day: "numeric", month: "short" }) + L(": ", ": ")) + Shared.fromMin(sun);
     $("#sunsetText").textContent = slot
-      ? L("Reserve para as " + slot.time + " e veja-o da mesa.", "Book for " + slot.time + " and watch it from your table.")
-      : L("Nesta data põe-se fora das horas de refeição. A vista está cá o dia todo.", "On this date it sets outside meal times. The view is here all day.");
+      ? L("A reserva das " + slot.time + " coincide com essa hora.", "The " + slot.time + " booking falls at that time.")
+      : L("Nesta data o sol põe-se fora dos horários de reserva.", "On this date the sun sets outside booking times.");
   }
 
   function renderWidget() {
@@ -441,7 +468,7 @@
     $("#pMinus").disabled = state.people <= 1;
     $("#pPlus").disabled = state.people >= max;
     $("#pNote").textContent = state.people >= max ? L("Mais de " + max + "? Ligue 261 931 400.", "More than " + max + "? Call 261 931 400.") : "";
-    $$("#zones button").forEach(function (b) { b.setAttribute("aria-checked", String(b.dataset.zone === state.zone)); });
+    $$("#zones button").forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.zone === state.zone)); });
     $("#zoneHint").textContent = state.zone === "esplanada"
       ? L("A esplanada depende do tempo. Se for preciso, passamos a mesa para a sala.", "The terrace depends on the weather. If need be, we'll move your table indoors.") : "";
     renderDays(); renderSlots(); renderSummary(); renderSunset();
@@ -456,18 +483,23 @@
     var el = $('[data-err="' + key + '"]', form);
     if (el) el.textContent = msg || "";
     var input = form.elements[key];
-    if (input && input.classList) input.classList.toggle("bad", !!msg);
+    if (input && input.classList) {
+      input.classList.toggle("bad", !!msg);
+      if (msg) input.setAttribute("aria-invalid", "true"); else input.removeAttribute("aria-invalid");
+    }
   }
-  var ERR_EN = { name: "Please enter your name.", phone: "Please enter a valid phone number.", email: "Invalid e-mail.", date: "Please choose a date.", time: "Please choose a time.", people: "Invalid party size." };
+  // onde pôr o foco quando o erro é de um grupo de botões e não de um campo
+  var ERR_FOCUS = { date: "#days", time: "#slots" };
+  var ERR_EN = { name: "Please enter your name.", phone: "Please enter a valid phone number.", date: "Please choose a date.", time: "Please choose a time.", people: "Invalid party size.", consent: "Please confirm you have read the Terms and the Privacy policy." };
 
   form.addEventListener("submit", async function (e) {
     e.preventDefault();
     var f = form.elements, btn = $("#submitBtn");
     var input = {
-      name: f.name.value, phone: f.phone.value, email: f.email.value, occasion: f.occasion.value, notes: f.notes.value,
+      name: f.name.value, phone: f.phone.value, occasion: f.occasion.value, notes: f.notes.value, consent: f.consent.checked,
       website: f.website.value, date: state.date, time: state.time || "", people: state.people, zone: state.zone
     };
-    ["name", "phone", "email", "date", "time"].forEach(function (k) { setErr(k, ""); });
+    ["name", "phone", "date", "time", "consent"].forEach(function (k) { setErr(k, ""); });
     $("#formErr").textContent = "";
     var settings = Object.assign({}, Shared.DEFAULT_SETTINGS, state.settings, { lunch: ["00:00", "23:59"], dinner: null, interval: 1 });
     var v = Shared.validate(input, settings, false), errors = v.errors;
@@ -493,17 +525,18 @@
     var first = null;
     Object.keys(errors).forEach(function (k) {
       setErr(k, lang === "en" ? (ERR_EN[k] || errors[k]) : errors[k]);
-      if (!first) first = form.elements[k] || $('[data-err="' + k + '"]', form);
+      if (!first) first = ERR_FOCUS[k] ? $(ERR_FOCUS[k]) : form.elements[k];
     });
     $("#formErr").textContent = message && !Object.keys(errors).length ? message : "";
-    if (first && first.focus && first.tagName) first.focus();
+    if (first && first.focus && first.tagName) first.focus({ preventScroll: true });
     if (first && first.scrollIntoView) first.scrollIntoView({ block: "center" });
   }
 
   $("#againBtn").addEventListener("click", function () {
     lastBooking = null; state.time = null;
-    form.elements.notes.value = ""; form.hidden = false; $("#done").hidden = true;
+    form.elements.notes.value = ""; form.elements.consent.checked = false; form.hidden = false; $("#done").hidden = true;
     loadDay();
+    $("#pPlus").focus({ preventScroll: true });
   });
   $("#icsBtn").addEventListener("click", function () {
     if (!lastBooking) return;
@@ -522,7 +555,7 @@
   /* ---------- Mapa (só carrega a pedido) ---------- */
   $("#mapBtn").addEventListener("click", function () {
     var box = $("#map"); box.textContent = "";
-    box.appendChild(h("iframe", {
+    box.appendChild(h("iframe", { tabindex: "0",
       title: L("Mapa: O Polvo, Santa Cruz", "Map: O Polvo, Santa Cruz"), loading: "lazy", referrerpolicy: "no-referrer-when-downgrade",
       src: "https://www.google.com/maps?q=" + encodeURIComponent(P.place.mapQuery) + "&z=16&output=embed"
     }));
@@ -538,12 +571,33 @@
   }
   window.addEventListener("scroll", onScroll, { passive: true }); onScroll();
 
-  var burger = $("#burger");
+  var burger = $("#burger"), overlay = $("#overlay");
+  overlay.inert = true;
+  function labelBurger() {
+    burger.setAttribute("aria-label", root.classList.contains("menu-open") ? L("Fechar o menu", "Close the menu") : L("Abrir o menu", "Open the menu"));
+  }
   function setMenu(open) {
+    var was = root.classList.contains("menu-open");
     root.classList.toggle("menu-open", open);
     root.style.overflow = open ? "hidden" : "";
     burger.setAttribute("aria-expanded", String(open));
+    overlay.inert = !open;
+    // enquanto o menu está aberto, o resto da página fica fora do alcance do teclado
+    $$("main, footer").forEach(function (el) { el.inert = open; });
+    labelBurger();
+    if (open) $("#overlay a").focus(); else if (was) burger.focus();
   }
+
+  // Pausar o que se move sozinho (faixa de serviços, montra, fundo)
+  var pauseBtn = $("#pauseBtn");
+  function labelPause() {
+    pauseBtn.lastElementChild.textContent = root.classList.contains("paused") ? L("Retomar animações", "Resume animations") : L("Pausar animações", "Pause animations");
+  }
+  pauseBtn.addEventListener("click", function () {
+    var on = root.classList.toggle("paused");
+    pauseBtn.setAttribute("aria-pressed", String(on));
+    labelPause();
+  });
   burger.addEventListener("click", function () { setMenu(!root.classList.contains("menu-open")); });
   $$("#overlay a").forEach(function (a) { a.addEventListener("click", function () { setMenu(false); }); });
   document.addEventListener("keydown", function (e) { if (e.key === "Escape") setMenu(false); });
@@ -552,13 +606,16 @@
   $$("#faq .faq-q").forEach(function (q) {
     q.addEventListener("click", function () {
       var open = q.getAttribute("aria-expanded") === "true";
-      $$("#faq .faq-q").forEach(function (o) { o.setAttribute("aria-expanded", "false"); });
-      q.setAttribute("aria-expanded", String(!open));
+      $$("#faq .faq-q").forEach(function (o) {
+        var show = o === q && !open;
+        o.setAttribute("aria-expanded", String(show));
+        document.getElementById(o.getAttribute("aria-controls")).inert = !show;
+      });
     });
   });
 
   $("#stPratos").dataset.count = P.menu.length;
-  $("#stPolvo").dataset.count = P.menu.filter(function (d) { return d.polvo; }).length;
+  $("#stPolvo").dataset.count = P.menu.filter(function (d) { return d.polvo && d.pt.indexOf("1/2") !== 0; }).length;
 
   /* ---------- Movimento ligado ao ponteiro e ao deslocamento ---------- */
   // Cartões com foco de luz que segue o ponteiro
@@ -585,6 +642,7 @@
     function wake() { if (!raf) raf = requestAnimationFrame(tick); }
     if (window.matchMedia("(hover: hover)").matches) {
       hero.addEventListener("pointermove", function (e) {
+        if (root.classList.contains("paused")) { tx = ty = 0; return wake(); }
         tx = e.clientX / window.innerWidth * 2 - 1; ty = e.clientY / window.innerHeight * 2 - 1; wake();
       }, { passive: true });
       hero.addEventListener("pointerleave", function () { tx = ty = 0; wake(); });

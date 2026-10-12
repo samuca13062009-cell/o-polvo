@@ -65,7 +65,7 @@
       var slot = Shared.availability(db.settings, db.reservations, v.value.date).find(function (s) { return s.time === v.value.time; });
       if (!slot || slot.left < v.value.people) throw fail("Esse horário já não tem lugares.", { time: "Sem lugares." }, 409);
       var now = new Date().toISOString();
-      var r = Object.assign(v.value, { id: uid(), code: Shared.newCode(), status: "pendente", source: "site", table: "", createdAt: now, updatedAt: now });
+      var r = Object.assign(v.value, { id: uid(), code: Shared.newCode(), status: "pendente", source: "site", table: "", consentAt: now, policyVersion: Shared.POLICY_VERSION, createdAt: now, updatedAt: now });
       db.reservations.push(r); localSave(db);
       return { ok: true, code: r.code, reservation: r };
     },

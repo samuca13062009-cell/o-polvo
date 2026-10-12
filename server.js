@@ -12,6 +12,7 @@ const DATA_DIR = path.join(__dirname, "data");
 const DB_FILE = path.join(DATA_DIR, "reservas.json");
 const CONFIG_FILE = path.join(__dirname, "config.json");
 const SESSION_MS = 12 * 60 * 60 * 1000;
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 /* ---------- Configuração ---------- */
 function loadConfig() {
@@ -27,6 +28,8 @@ function loadConfig() {
 }
 const config = loadConfig();
 const PORT = +process.env.PORT || config.port || 4173;
+// Dias que uma reserva fica guardada depois da data da refeição (ver Política de Privacidade)
+const RETENTION_DAYS = config.retentionDays > 0 ? +config.retentionDays : 90;
 
 /* ---------- Base de dados (ficheiro JSON) ---------- */
 let db = { settings: Shared.mergeSettings({}), reservations: [] };
@@ -42,6 +45,15 @@ function save() {
   fs.writeFileSync(tmp, JSON.stringify(db, null, 2));
   fs.renameSync(tmp, DB_FILE);
 }
+
+// Apaga as reservas cuja data já passou há mais do que o prazo de conservação
+function purgeOld() {
+  const limit = Shared.addDays(Shared.nowLisbon().date, -RETENTION_DAYS);
+  const kept = db.reservations.filter((r) => !(Shared.isDate(r.date) && r.date < limit));
+  if (kept.length !== db.reservations.length) { db.reservations = kept; save(); }
+}
+purgeOld();
+setInterval(purgeOld, DAY_MS).unref();
 
 /* ---------- Sessões e limites ---------- */
 const sessions = new Map();
@@ -125,7 +137,7 @@ async function api(req, res, url) {
     const now = new Date().toISOString();
     const r = Object.assign(v.value, {
       id: crypto.randomUUID(), code: Shared.newCode(), status: "pendente", source: "site", table: "",
-      createdAt: now, updatedAt: now
+      consentAt: now, policyVersion: Shared.POLICY_VERSION, createdAt: now, updatedAt: now
     });
     db.reservations.push(r);
     save();
@@ -194,13 +206,15 @@ function serveStatic(req, res, url) {
   let rel = decodeURIComponent(url.pathname);
   if (rel === "/") rel = "/index.html";
   if (rel === "/admin") rel = "/admin.html";
+  if (rel === "/privacidade" || rel === "/termos" || rel === "/cookies") rel += ".html";
   const file = path.normalize(path.join(ROOT, rel));
   if (!file.startsWith(ROOT + path.sep)) { res.writeHead(403); return res.end(); }
   fs.readFile(file, (err, buf) => {
     if (err) { res.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" }); return res.end("Página não encontrada"); }
     res.writeHead(200, {
       "Content-Type": TYPES[path.extname(file).toLowerCase()] || "application/octet-stream",
-      "Cache-Control": "no-cache", "X-Content-Type-Options": "nosniff", "Referrer-Policy": "strict-origin-when-cross-origin"
+      "Cache-Control": "no-cache", "X-Content-Type-Options": "nosniff", "Referrer-Policy": "strict-origin-when-cross-origin",
+      "X-Frame-Options": "SAMEORIGIN", "Permissions-Policy": "geolocation=(), camera=(), microphone=()"
     });
     res.end(req.method === "HEAD" ? undefined : buf);
   });

@@ -21,6 +21,8 @@
   var ACTIVE = ["pendente", "confirmada", "sentada", "concluida"];
   var ZONES = ["any", "sala", "esplanada"];
   var TZ = "Europe/Lisbon";
+  // Versão dos Termos e da Política de Privacidade aceites em cada pedido feito no site
+  var POLICY_VERSION = "2026-10-12";
 
   function toMin(t) { var p = String(t).split(":"); return (+p[0]) * 60 + (+p[1]); }
   function fromMin(m) { return String(Math.floor(m / 60)).padStart(2, "0") + ":" + String(m % 60).padStart(2, "0"); }
@@ -95,7 +97,9 @@
     if (v.name.length < 2) e.name = "Indique o nome.";
     v.phone = clean(input.phone, 24);
     if (!/^\+?[\d\s().-]{6,22}$/.test(v.phone) && !(admin && !v.phone)) e.phone = "Indique um telefone válido.";
-    v.email = clean(input.email, 120);
+    // o e-mail não é pedido no site (dados mínimos); só a equipa o pode registar
+    v.email = admin ? clean(input.email, 120) : "";
+    if (!admin && input.consent !== true) e.consent = "Confirme que leu os Termos e a Política de Privacidade.";
     if (v.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.email)) e.email = "E-mail inválido.";
     v.date = clean(input.date, 10);
     if (!isDate(v.date)) e.date = "Escolha uma data.";
@@ -151,7 +155,7 @@
   }
 
   return {
-    DEFAULT_SETTINGS: DEFAULT_SETTINGS, STATUSES: STATUSES, ACTIVE: ACTIVE, ZONES: ZONES, TZ: TZ,
+    POLICY_VERSION: POLICY_VERSION, DEFAULT_SETTINGS: DEFAULT_SETTINGS, STATUSES: STATUSES, ACTIVE: ACTIVE, ZONES: ZONES, TZ: TZ,
     toMin: toMin, fromMin: fromMin, isDate: isDate, isTime: isTime, nowLisbon: nowLisbon,
     addDays: addDays, weekdayOf: weekdayOf, slotsFor: slotsFor, closedReason: closedReason,
     availability: availability, validate: validate, mergeSettings: mergeSettings, newCode: newCode

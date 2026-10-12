@@ -23,7 +23,10 @@ function bundle(page, renames) {
   return html;
 }
 
-const names = { "index.html": "o-polvo.html", "admin.html": "o-polvo-admin.html" };
+const names = {
+  "index.html": "o-polvo.html", "admin.html": "o-polvo-admin.html",
+  "privacidade.html": "o-polvo-privacidade.html", "cookies.html": "o-polvo-cookies.html", "termos.html": "o-polvo-termos.html"
+};
 Object.keys(names).forEach((page) => {
   const file = path.join(OUT, names[page]);
   fs.writeFileSync(file, bundle(page, names));
