@@ -8,19 +8,19 @@ colors:
   dark-text: "#eef0f8"
   dark-text-2: "#b3bad2"
   dark-text-3: "#8b93af"
-  dark-accent: "#ff8f70"
-  dark-button: "#ff7a59"
-  dark-on-button: "#1d0c07"
+  dark-accent: "#f6c765"
+  dark-button: "#f2b544"
+  dark-on-button: "#1a1405"
   light-bg: "#f6f0e6"
   light-surface: "#fffaf3"
   light-surface-2: "#efe6d8"
   light-text: "#1a1930"
   light-text-2: "#524d60"
-  light-accent: "#b23a22"
-  light-button: "#c2452b"
-  sun: "#ffc857"
+  light-accent: "#8a5a10"
+  light-button: "#16224d"
+  sun: "#ff9f45"
   ok: "#4fd08b"
-  bad: "#ff4d6d"
+  bad: "#f0553a"
 typography:
   family: "Archivo, Helvetica Neue, Helvetica, Arial, sans-serif"
   display: "800, clamp(2.5rem, 4.3vw, 3.9rem), line-height 1.02, letter-spacing -0.045em"
@@ -37,7 +37,7 @@ rounded:
 
 ## Overview
 
-The layout and motion language follow a reference the owner chose in October 2026 (digitalconvert.pt): a dark page with tight, heavy headlines, pill buttons, rounded bordered cards, numbered kickers and restrained but continuous motion. The theme is O Polvo's own, "the sea at night": deep navy, the coral of an octopus, sand-coloured light panels and a golden sun. The site has no photographs on hand: where the reference shows device mock-ups and pictures, this site shows live facts - today's sun over Santa Cruz, the day's rhythm, dishes with their prices.
+The layout and motion language follow a reference the owner chose in October 2026 (digitalconvert.pt): a dark page with tight, heavy headlines, pill buttons, rounded bordered cards, numbered kickers and restrained but continuous motion. The theme is O Polvo's own, "the sea at night": deep navy with amber gold (the navy and ochre of the printed menu), sand-coloured light panels and an orange sun. The owner rejected a coral accent as too pink. The site has no photographs on hand: where the reference shows device mock-ups and pictures, this site shows live facts - today's sun over Santa Cruz, the day's rhythm, dishes with their prices.
 
 This document covers the public site only (`public/index.html`, `public/css/site.css`, `public/js/site.js`). The staff panel and the printed menu PDF keep their earlier look.
 
@@ -45,10 +45,10 @@ This document covers the public site only (`public/index.html`, `public/css/site
 
 Sections alternate. `.dark` (hero, the house, bookings, closing, footer) and `.light` (menu, visit) each set the same custom properties (`--bg`, `--sf`, `--sf2`, `--ln`, `--ln2`, `--tx`, `--tx2`, `--tx3`, `--ac`, `--btn`, `--on`, `--glow`, `--glow2`); components read only those. Dark is navy with blue-tinted lines; light is warm sand with navy ink. Light sections are large rounded panels sitting on the dark page.
 
-- **Accent** is coral on navy and terracotta on sand: `--ac` for text and marks, `--btn` for filled buttons and every selected control, `--on` for the text on top of it (dark on coral, white on terracotta).
+- **Accent** is amber gold on navy and ochre on sand, where filled buttons and selected controls turn navy: `--ac` for text and marks, `--btn` for filled buttons and every selected control, `--on` for the text on top of it (dark on gold, white on navy).
 - **Indigo blue** (`--glow2`, the wave lines) only lights the background.
-- **Sun gold** is only for the sun: the arc in the hero panel, the sunset icon and the time slot that catches the sunset.
-- **Green and rose red** only report open and closed, success and error, always beside words that say the same.
+- **Sun orange** is only for the sun: the arc in the hero panel, the sunset icon and the time slot that catches the sunset.
+- **Green and red** only report open and closed, success and error, always beside words that say the same.
 
 ## Typography
 
@@ -80,5 +80,5 @@ Hidden starting states depend on `html.motion`, set in the `<head>` only when re
 
 - Don't use stock or generated pictures as the restaurant; the photo place in "A casa" stays commented out until real photographs exist.
 - Don't invent facts, reviews or numbers; every figure on the page comes from `data.js` or the fixed facts in `PRODUCT.md`.
-- Don't use gold for anything but the sun, or the accent as a large background fill.
+- Don't use pink or coral anywhere. Don't use orange for anything but the sun, or the accent as a large background fill.
 - Don't add a second typeface.
